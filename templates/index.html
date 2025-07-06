@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Minigolf">
-    <title>🏌️ Minigolf Scorer</title>
+    <meta name="apple-mobile-web-app-title" content="Gopher Minigolf">
+    <title>🏌️ Gopher Minigolf</title>
     <style>
         * {
             margin: 0;
@@ -69,6 +69,32 @@
         @keyframes rotate {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        .gopher-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            animation: bounce 2s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
         .header h1 {
@@ -279,6 +305,15 @@
             display: block;
         }
 
+        .fallback-icon {
+            font-size: 60px;
+            margin: 0 auto 20px;
+            text-align: center;
+            animation: bounce 2s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
         /* Mobile Optimierung */
         @media (max-width: 768px) {
             .container {
@@ -288,6 +323,11 @@
             
             .header {
                 padding: 30px 20px;
+            }
+            
+            .gopher-icon {
+                width: 60px;
+                height: 60px;
             }
             
             .header h1 {
@@ -319,7 +359,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏌️ Minigolf Scorer</h1>
+            <!-- Gopher Icon mit korrektem Pfad -->
+            <img src="../icons/gopher_main.png" 
+                 alt="🐿️ Gopher Maskottchen" 
+                 class="gopher-icon" 
+                 id="gopherIcon"
+                 onerror="this.style.display='none'; document.getElementById('fallbackIcon').style.display='block';">
+            <div id="fallbackIcon" class="fallback-icon" style="display: none;">🐹</div>
+            
+            <h1>Gopher Minigolf</h1>
             <p>Starte ein neues Spiel</p>
         </div>
 
@@ -378,6 +426,17 @@
     <script>
         // Heutiges Datum setzen
         document.querySelector('input[name="date"]').valueAsDate = new Date();
+
+        // Debug: Prüfe ob das richtige Bild geladen wird
+        document.getElementById('gopherIcon').onload = function() {
+            console.log('✅ Gopher Icon erfolgreich geladen!');
+        };
+        
+        document.getElementById('gopherIcon').onerror = function() {
+            console.log('❌ Gopher Icon konnte nicht geladen werden. Fallback wird angezeigt.');
+            this.style.display = 'none';
+            document.getElementById('fallbackIcon').style.display = 'block';
+        };
 
         // Spieler-Eingaben dynamisch erstellen
         document.getElementById('playerCount').addEventListener('input', function() {
