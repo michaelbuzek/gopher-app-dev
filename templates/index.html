@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Minigolf">
+    <title>🏌️ Minigolf Scorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav {
+            background: rgba(248, 249, 250, 0.8);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #495057;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2ecc71;
+            box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-input:invalid {
+            border-color: #e74c3c;
+        }
+
+        .players-container {
+            background: rgba(46, 204, 113, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px dashed rgba(46, 204, 113, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .players-container.has-players {
+            border-style: solid;
+            border-color: #2ecc71;
+        }
+
+        .player-input {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .player-input:last-child {
+            margin-bottom: 0;
+        }
+
+        .player-input input {
+            padding-left: 50px;
+        }
+
+        .player-input::before {
+            content: '👤';
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+            z-index: 1;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2ecc71;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ffcdd2;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Mobile Optimierung */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+            
+            .nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-link {
+                justify-content: center;
+            }
+        }
+
+        /* Touch-Optimierung für iOS */
+        @media (hover: none) {
+            .form-input {
+                font-size: 16px; /* Verhindert Zoom auf iOS */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏌️ Minigolf Scorer</h1>
+            <p>Starte ein neues Spiel</p>
+        </div>
+
+        <div class="nav">
+            <a href="/" class="nav-link active">
+                🏠 Home
+            </a>
+            <a href="/history" class="nav-link">
+                📜 History
+            </a>
+        </div>
+
+        <div class="form-container">
+            <div class="error-message" id="errorMessage"></div>
+            
+            <form id="startForm">
+                <div class="form-group">
+                    <label class="form-label">🏌️ Minigolf-Platz</label>
+                    <input type="text" class="form-input" name="place" required 
+                           placeholder="z.B. Bülach, Adventure Golf..." value="Bülach">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📅 Datum</label>
+                    <input type="date" class="form-input" name="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⛳ Anzahl Bahnen</label>
+                    <input type="number" class="form-input" name="tracks" required 
+                           value="18" min="1" max="50">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">👥 Anzahl Spieler</label>
+                    <input type="number" class="form-input" id="playerCount" name="players" 
+                           required min="1" max="8" placeholder="Wie viele Spieler?">
+                </div>
+
+                <div id="playersContainer" class="players-container" style="display: none;">
+                    <div id="playerInputs"></div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    🚀 Spiel starten
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Spiel wird erstellt...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Heutiges Datum setzen
+        document.querySelector('input[name="date"]').valueAsDate = new Date();
+
+        // Spieler-Eingaben dynamisch erstellen
+        document.getElementById('playerCount').addEventListener('input', function() {
+            const count = parseInt(this.value);
+            const container = document.getElementById('playersContainer');
+            const inputs = document.getElementById('playerInputs');
+            
+            inputs.innerHTML = '';
+            
+            if (!isNaN(count) && count > 0) {
+                container.style.display = 'block';
+                container.classList.add('has-players');
+                
+                for (let i = 0; i < count; i++) {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = 'player-input';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-input';
+                    input.name = `player_${i}`;
+                    input.required = true;
+                    input.placeholder = `Spieler ${i + 1} Name`;
+                    
+                    playerDiv.appendChild(input);
+                    inputs.appendChild(playerDiv);
+                }
+                
+                // Fokus auf ersten Spieler
+                inputs.querySelector('input').focus();
+            } else {
+                container.style.display = 'none';
+                container.classList.remove('has-players');
+            }
+        });
+
+        // Form Submit
+        document.getElementById('startForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.querySelector('.submit-btn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // UI Updates
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            errorMessage.classList.remove('show');
+            
+            try {
+                const formData = new FormData(e.target);
+                const place = formData.get('place');
+                const date = formData.get('date');
+                const track_count = parseInt(formData.get('tracks'));
+                const playerCount = parseInt(formData.get('players'));
+
+                // Spieler sammeln
+                const players = [];
+                for (let i = 0; i < playerCount; i++) {
+                    const name = formData.get(`player_${i}`);
+                    if (!name?.trim()) {
+                        throw new Error(`Bitte gib einen Namen für Spieler ${i + 1} ein`);
+                    }
+                    players.push({ name: name.trim() });
+                }
+
+                const data = { place, date, track_count, players };
+
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Erfolg - weiterleiten
+                    window.location.href = `/score/${result.game_id}`;
+                } else {
+                    throw new Error(result.message || 'Unbekannter Fehler');
+                }
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                errorMessage.textContent = error.message;
+                errorMessage.classList.add('show');
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+
+        // Eingabe-Validierung
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.checkValidity()) {
+                    this.style.borderColor = '#2ecc71';
+                } else {
+                    this.style.borderColor = '#e74c3c';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

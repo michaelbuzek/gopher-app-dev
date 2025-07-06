@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>🏆 Spiel Ergebnisse</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '🏆';
+            position: absolute;
+            font-size: 8em;
+            opacity: 0.1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav {
+            background: rgba(248, 249, 250, 0.8);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #495057;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            transform: translateY(-2px);
+        }
+
+        .results-container {
+            padding: 40px;
+        }
+
+        .winner-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .winner-card {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(46, 204, 113, 0.3);
+            position: relative;
+            overflow: hidden;
+            transform: scale(1.05);
+            animation: bounce 0.6s ease-out;
+        }
+
+        /* Gleichstand-Styling */
+        .winner-card.tie {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            box-shadow: 0 20px 40px rgba(243, 156, 18, 0.3);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: scale(1.05); }
+            40% { transform: scale(1.1); }
+            80% { transform: scale(1.03); }
+        }
+
+        .winner-card::before {
+            content: '👑';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 4em;
+            opacity: 0.3;
+        }
+
+        .winner-title {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .winner-name {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .winner-score {
+            font-size: 1.5em;
+            opacity: 0.9;
+        }
+
+        .all-results {
+            margin-top: 40px;
+        }
+
+        .results-title {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-card.first {
+            border: 3px solid #f39c12;
+            background: linear-gradient(135deg, #fff 0%, #fff8e1 100%);
+        }
+
+        .result-card.second {
+            border: 3px solid #95a5a6;
+        }
+
+        .result-card.third {
+            border: 3px solid #cd853f;
+        }
+
+        /* Gleichstand-Cards */
+        .result-card.tie {
+            border: 3px solid #f39c12;
+            background: linear-gradient(135deg, #fff 0%, #fff3e0 100%);
+        }
+
+        .result-position {
+            font-size: 2em;
+            font-weight: bold;
+            margin-right: 20px;
+            min-width: 60px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .result-details {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .result-score {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2ecc71;
+            text-align: center;
+        }
+
+        .result-card.first .result-score,
+        .result-card.tie .result-score {
+            color: #f39c12;
+        }
+
+        .detailed-scores {
+            margin-top: 40px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .scores-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .scores-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .scores-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .scores-table tr:hover {
+            background: rgba(46, 204, 113, 0.05);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        /* Mobile Optimierung */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 20px;
+            }
+
+            .results-container {
+                padding: 20px;
+            }
+
+            .winner-card {
+                padding: 30px 20px;
+            }
+
+            .winner-name {
+                font-size: 2.2em;
+            }
+
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .result-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .result-position {
+                margin-right: 0;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .scores-table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Spiel Ergebnisse</h1>
+            <div class="game-info">
+                <div>📍 <strong>{{ game.place }}</strong></div>
+                <div>📅 <strong>{{ game.date }}</strong></div>
+                <div>⛳ <strong>{{ game.track_count }} Bahnen</strong></div>
+            </div>
+        </div>
+
+        <div class="nav">
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/score/{{ game.id }}" class="nav-link">📝 Score bearbeiten</a>
+            <a href="/history" class="nav-link">📜 History</a>
+        </div>
+
+        <div class="results-container">
+            {% if results and results[0].total > 0 %}
+            <div class="winner-section">
+                {% set winners = results|selectattr('is_winner')|list %}
+                {% if winners|length == 1 %}
+                    <!-- Ein Gewinner -->
+                    <div class="winner-card">
+                        <div class="winner-title">🎉 Gewinner 🎉</div>
+                        <div class="winner-name">{{ winners[0].name }}</div>
+                        <div class="winner-score">{{ winners[0].total }} Schläge</div>
+                    </div>
+                {% elif winners|length > 1 %}
+                    <!-- Gleichstand -->
+                    <div class="winner-card tie">
+                        <div class="winner-title">🤝 Gleichstand! 🤝</div>
+                        <div class="winner-name">
+                            {% for winner in winners %}
+                                {{ winner.name }}{% if not loop.last %} & {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="winner-score">{{ winners[0].total }} Schläge</div>
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="all-results">
+                <h2 class="results-title">📊 Endergebnis</h2>
+                <div class="results-grid">
+                    {% for result in results %}
+                    <div class="result-card {% if result.is_tie %}tie{% elif loop.index == 1 and result.total > 0 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% endif %}">
+                        <div class="result-position">
+                            {% if result.is_tie %}🤝
+                            {% elif loop.index == 1 and result.total > 0 %}🥇
+                            {% elif loop.index == 2 %}🥈
+                            {% elif loop.index == 3 %}🥉
+                            {% else %}{{ loop.index }}.{% endif %}
+                        </div>
+                        <div class="result-info">
+                            <div class="result-name">{{ result.name }}</div>
+                            <div class="result-details">
+                                {% if result.total > 0 %}
+                                    Ø {{ "%.1f"|format(result.total / game.track_count) }} pro Bahn
+                                {% else %}
+                                    Noch keine Scores
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="result-score">
+                            {% if result.total > 0 %}{{ result.total }}{% else %}-{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if results and results[0].total > 0 %}
+            <div class="detailed-scores">
+                <h3 style="margin-bottom: 20px; text-align: center; color: #2c3e50;">📋 Detaillierte Scores</h3>
+                <table class="scores-table">
+                    <thead>
+                        <tr>
+                            <th>Bahn</th>
+                            {% for result in results %}
+                                <th>{{ result.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for track in range(1, game.track_count + 1) %}
+                        <tr>
+                            <td><strong>{{ track }}</strong></td>
+                            {% for result in results %}
+                                <td>
+                                    {% if result.scores.get(track) %}
+                                        {{ result.scores[track] }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        
+                        <!-- Total Row -->
+                        <tr style="background: #f8f9fa; font-weight: bold;">
+                            <td><strong>Total</strong></td>
+                            {% for result in results %}
+                                <td style="color: #2ecc71; font-size: 1.2em;">
+                                    {% if result.total > 0 %}{{ result.total }}{% else %}-{% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="action-buttons">
+                <a href="/" class="action-btn btn-success">
+                    🏠 Neues Spiel
+                </a>
+                <a href="/score/{{ game.id }}" class="action-btn btn-primary">
+                    📝 Score bearbeiten
+                </a>
+                <a href="/history" class="action-btn btn-primary">
+                    📜 Alle Spiele
+                </a>
+            </div>
+
+            <!-- Share Results Section -->
+            <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 15px; text-align: center;">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">📱 Ergebnis teilen</h3>
+                <button onclick="shareResults()" class="action-btn btn-success" style="margin: 0 auto; max-width: 300px;">
+                    📤 Teilen
+                </button>
+            </div>
+
+            <!-- Statistics Section -->
+            {% if results and results[0].total > 0 %}
+            <div style="margin-top: 40px;">
+                <h3 style="margin-bottom: 25px; text-align: center; color: #2c3e50;">📈 Spiel-Statistiken</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    {% set ns = namespace(best_track=None, worst_track=None, best_score=999, worst_score=0) %}
+                    {% for track in range(1, game.track_count + 1) %}
+                        {% set track_scores = [] %}
+                        {% for result in results %}
+                            {% if result.scores.get(track) and result.scores[track] > 0 %}
+                                {% set _ = track_scores.append(result.scores[track]) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if track_scores %}
+                            {% set avg_score = (track_scores|sum / track_scores|length) %}
+                            {% if avg_score < ns.best_score %}
+                                {% set ns.best_score = avg_score %}
+                                {% set ns.best_track = track %}
+                            {% endif %}
+                            {% if avg_score > ns.worst_score %}
+                                {% set ns.worst_score = avg_score %}
+                                {% set ns.worst_track = track %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+                        <div style="font-size: 2.5em; color: #2ecc71; margin-bottom: 10px;">⭐</div>
+                        <div style="font-size: 1.2em; font-weight: 600; color: #2c3e50;">Einfachste Bahn</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #2ecc71;">
+                            {% if ns.best_track %}{{ ns.best_track }}{% else %}-{% endif %}
+                        </div>
+                        {% if ns.best_track %}
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Ø {{ "%.1f"|format(ns.best_score) }} Schläge</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+                        <div style="font-size: 2.5em; color: #e74c3c; margin-bottom: 10px;">🔥</div>
+                        <div style="font-size: 1.2em; font-weight: 600; color: #2c3e50;">Schwierigste Bahn</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #e74c3c;">
+                            {% if ns.worst_track %}{{ ns.worst_track }}{% else %}-{% endif %}
+                        </div>
+                        {% if ns.worst_track %}
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Ø {{ "%.1f"|format(ns.worst_score) }} Schläge</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+                        <div style="font-size: 2.5em; color: #3498db; margin-bottom: 10px;">⏱️</div>
+                        <div style="font-size: 1.2em; font-weight: 600; color: #2c3e50;">Spieldauer</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #3498db;" id="gameDuration">-</div>
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Geschätzt</div>
+                    </div>
+
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+                        <div style="font-size: 2.5em; color: #f39c12; margin-bottom: 10px;">🎯</div>
+                        <div style="font-size: 1.2em; font-weight: 600; color: #2c3e50;">Gesamt-Schläge</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #f39c12;">
+                            {{ results|sum(attribute='total') }}
+                        </div>
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Alle Spieler</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Spieldauer schätzen (3-4 Minuten pro Bahn)
+        document.addEventListener('DOMContentLoaded', function() {
+            const trackCount = {{ game.track_count }};
+            const playerCount = {{ results|length }};
+            const estimatedMinutes = Math.round(trackCount * 3.5 + playerCount * 5);
+            
+            const hours = Math.floor(estimatedMinutes / 60);
+            const minutes = estimatedMinutes % 60;
+            
+            let durationText = '';
+            if (hours > 0) {
+                durationText = `${hours}h ${minutes}min`;
+            } else {
+                durationText = `${minutes} min`;
+            }
+            
+            document.getElementById('gameDuration').textContent = durationText;
+        });
+
+        // Share Results Function
+        async function shareResults() {
+            // Spiel-Info
+            const place = '{{ game.place }}';
+            const date = '{{ game.date }}';
+            const trackCount = {{ game.track_count }};
+            
+            // Gewinner-Info sicher laden
+            const winners = [{% for result in results %}{% if result.is_winner %}'{{ result.name }}'{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}];
+            const winnerScore = {% if results and results[0].total > 0 %}{{ results[0].total }}{% else %}0{% endif %};
+            const isTie = winners.length > 1;
+
+            let shareText = `🏌️ Minigolf Ergebnis\n\n`;
+            shareText += `📍 ${place}\n`;
+            shareText += `📅 ${date}\n`;
+            shareText += `⛳ ${trackCount} Bahnen\n\n`;
+            
+            if (isTie && winnerScore > 0) {
+                shareText += `🤝 Gleichstand! ${winners.join(' & ')} mit ${winnerScore} Schlägen\n\n`;
+            } else if (winners.length === 1 && winnerScore > 0) {
+                shareText += `🏆 Gewinner: ${winners[0]}\n`;
+                shareText += `🎯 Score: ${winnerScore} Schläge\n\n`;
+            }
+            
+            shareText += `Endergebnis:\n`;
+            {% for result in results %}
+            shareText += `{% if result.is_tie %}🤝{% elif loop.index == 1 and result.total > 0 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}.{% endif %} {{ result.name }}: {% if result.total > 0 %}{{ result.total }}{% else %}-{% endif %}\n`;
+            {% endfor %}
+
+            // Web Share API (falls verfügbar)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: '🏌️ Minigolf Ergebnis',
+                        text: shareText
+                    });
+                } catch (err) {
+                    console.log('Sharing canceled');
+                }
+            } else {
+                // Fallback: Copy to clipboard
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    
+                    // Visual feedback
+                    const btn = event.target;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Kopiert!';
+                    btn.style.background = '#2ecc71';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                    
+                } catch (err) {
+                    // Fallback: Show alert with text
+                    alert('Teile das Ergebnis:\n\n' + shareText);
+                }
+            }
+        }
+
+        // Konfetti-Effekt für Gewinner (optional)
+        {% if results and results[0].total > 0 %}
+        function createConfetti() {
+            const colors = ['#f39c12', '#e74c3c', '#2ecc71', '#3498db', '#9b59b6'];
+            const container = document.querySelector('.winner-card');
+            
+            if (!container) return;
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = '50%';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.animation = `fall ${2 + Math.random() * 3}s linear forwards`;
+                
+                container.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // CSS für Konfetti-Animation hinzufügen
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                0% {
+                    transform: translateY(-10px) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(400px) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Konfetti starten nach 1 Sekunde
+        setTimeout(createConfetti, 1000);
+        {% endif %}
+    </script>
+</body>
+</html>
