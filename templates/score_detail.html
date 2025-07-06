@@ -149,10 +149,28 @@
             transform: scale(1.05);
         }
 
+        /* Verbesserter Placeholder-Style */
+        .score-input::placeholder {
+            color: #bdc3c7;
+            font-weight: 400;
+            opacity: 0.7;
+        }
+
+        .score-input:focus::placeholder {
+            opacity: 0.3;
+        }
+
+        /* Bessere visuelle Unterscheidung */
         .score-input.has-value {
             background: #2ecc71;
             color: white;
             border-color: #27ae60;
+        }
+
+        .score-input:not(.has-value) {
+            background: white;
+            color: #2c3e50;
+            border-color: #e9ecef;
         }
 
         .totals-section {
@@ -195,22 +213,22 @@
         }
 
         .total-card.winner::before {
-    content: var(--winner-emoji, '🏆'); /* Standardmäßig Trophäe */
-    font-size: 2em;
-    display: block;
-    margin-bottom: 10px;
+            content: '🏆';
+            font-size: 2em;
+            display: block;
+            margin-bottom: 10px;
         }
 
         .total-card.winner.tie {
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    color: white;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
         }
 
         .total-card.winner.tie::before {
-    content: '🤝';
-    font-size: 2em;
-    display: block;
-    margin-bottom: 10px;
+            content: '🤝';
+            font-size: 2em;
+            display: block;
+            margin-bottom: 10px;
         }
 
         .player-name {
@@ -480,15 +498,17 @@
                         {% for player in players %}
                             <td>
                                 <input 
-                                    type="number" 
-                                    class="score-input" 
-                                    data-player-id="{{ player.id }}" 
-                                    data-track="{{ track }}" 
-                                    value="{{ score_map.get((player.id, track), '') }}"
-                                    min="1"
-                                    max="20"
-                                    inputmode="numeric"
-                                    pattern="[0-9]*"
+                                type="number" 
+                                class="score-input" 
+                                data-player-id="{{ player.id }}" 
+                                data-track="{{ track }}" 
+                                value="{{ score_map.get((player.id, track), '') }}"
+                                placeholder="0"
+                                min="1"
+                                max="20"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                            >
                                 >
                             </td>
                         {% endfor %}
@@ -560,7 +580,7 @@
         let totals = {};
         let numpadVisible = false;
         
-        // Totals initialisieren - GEFIXTE VERSION
+        // Totals initialisieren - sicher
         const playerIds = [{% for player in players %}{{ player.id }}{% if not loop.last %},{% endif %}{% endfor %}];
         
         playerIds.forEach(id => {
@@ -584,7 +604,7 @@
             input.addEventListener('input', function() {
                 const value = parseInt(this.value) || 0;
                 
-                // Visuelles Feedback
+                // Visuelles Feedback - VERBESSERT
                 if (value > 0) {
                     this.classList.add('has-value');
                 } else {
@@ -738,36 +758,59 @@
             }
         }
 
-        // Totals anzeigen aktualisieren
+        // Totals anzeigen aktualisieren - mit verbesserter Gleichstand-Logik
         function updateTotalsDisplay() {
             let minScore = Infinity;
+            let winners = [];
 
-            // Alle Totals aktualisieren
+            // Alle Totals aktualisieren und Minimum finden
             for (const [playerId, total] of Object.entries(totals)) {
                 const totalElement = document.getElementById(`total-${playerId}`);
-                const cardElement = document.getElementById(`total-card-${playerId}`);
                 
                 if (totalElement) {
                     totalElement.textContent = total;
                 }
 
-                // Minimum Score für Gewinner-Bestimmung
-                if (total > 0 && total < minScore) {
-                    minScore = total;
+                // Minimum Score für Gewinner-Bestimmung (nur wenn > 0)
+                if (total > 0) {
+                    if (total < minScore) {
+                        minScore = total;
+                        winners = [playerId]; // Neuer bester Score
+                    } else if (total === minScore) {
+                        winners.push(playerId); // Gleichstand!
+                    }
                 }
             }
 
-            // Gewinner markieren (nur wenn Scores > 0 vorhanden)
-            if (minScore !== Infinity) {
-                for (const [playerId, total] of Object.entries(totals)) {
+            // Alle Cards zurücksetzen
+            for (const playerId of Object.keys(totals)) {
+                const cardElement = document.getElementById(`total-card-${playerId}`);
+                if (cardElement) {
+                    cardElement.classList.remove('winner', 'tie');
+                }
+            }
+
+            // Gewinner markieren
+            if (minScore !== Infinity && winners.length > 0) {
+                const isTie = winners.length > 1;
+                
+                winners.forEach(playerId => {
                     const cardElement = document.getElementById(`total-card-${playerId}`);
                     if (cardElement) {
-                        if (total === minScore && total > 0) {
-                            cardElement.classList.add('winner');
-                        } else {
-                            cardElement.classList.remove('winner');
+                        cardElement.classList.add('winner');
+                        
+                        // Bei Gleichstand: zusätzliche tie-Klasse
+                        if (isTie) {
+                            cardElement.classList.add('tie');
                         }
                     }
+                });
+                
+                // Debug-Info
+                if (isTie) {
+                    console.log(`🤝 Gleichstand! ${winners.length} Spieler mit ${minScore} Punkten`);
+                } else {
+                    console.log(`🏆 Gewinner! Spieler ${winners[0]} mit ${minScore} Punkten`);
                 }
             }
         }
@@ -783,26 +826,42 @@
 
         // Initial totals berechnen und anzeigen
         function calculateInitialTotals() {
-            const inputs = document.querySelectorAll('.score-input');
-            
-            // Totals zurücksetzen
-            for (const playerId in totals) {
-                totals[playerId] = 0;
-            }
+    const inputs = document.querySelectorAll('.score-input');
+    
+    // Totals zurücksetzen
+    for (const playerId in totals) {
+        totals[playerId] = 0;
+    }
 
-            // Alle vorhandenen Scores aufsummieren
-            inputs.forEach(input => {
-                const playerId = parseInt(input.dataset.playerId);
-                const value = parseInt(input.value) || 0;
-                
-                if (value > 0) {
-                    input.classList.add('has-value');
-                    totals[playerId] += value;
-                }
-            });
+    // Scores aus der Server-Daten laden
+    const scoreData = {
+        {% for player in players %}
+        {{ player.id }}: {
+            {% for track in range(1, track_count + 1) %}
+            {{ track }}: {{ score_map.get((player.id, track), 0) }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
 
-            updateTotalsDisplay();
+    // Inputs mit Daten füllen
+    inputs.forEach(input => {
+        const playerId = parseInt(input.dataset.playerId);
+        const track = parseInt(input.dataset.track);
+        const value = scoreData[playerId][track];
+        
+        if (value > 0) {
+            input.value = value;
+            input.classList.add('has-value');
+            totals[playerId] += value;
+        } else {
+            input.value = '';
+            input.classList.remove('has-value');
         }
+    });
+
+    updateTotalsDisplay();
+}
 
         // Initial Setup
         document.addEventListener('DOMContentLoaded', function() {
