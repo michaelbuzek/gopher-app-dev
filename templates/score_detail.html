@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>🏌️ Score Eingabe</title>
+    <meta name="apple-mobile-web-app-title" content="Gopher Minigolf">
+    <title>🏌️ Gopher Minigolf - Score Eingabe</title>
     <style>
         * {
             margin: 0;
@@ -15,7 +16,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f7f3f0 0%, #ede7e0 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -23,64 +24,129 @@
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 25px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.04);
             overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .gopher-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            animation: bounce 2s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px);
+            }
+            60% {
+                transform: translateY(-4px);
+            }
         }
 
         .header h1 {
             font-size: 2.2em;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
 
         .game-info {
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 16px;
             margin-top: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
         .nav {
-            background: rgba(248, 249, 250, 0.8);
-            padding: 15px;
+            background: #f8fafc;
+            padding: 0;
             display: flex;
             justify-content: center;
-            gap: 20px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 0;
+            border-bottom: none;
         }
 
         .nav-link {
             text-decoration: none;
-            color: #495057;
+            color: #64748b;
             font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 16px 32px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 8px;
+            flex: 1;
+            justify-content: center;
+            border-bottom: 3px solid transparent;
         }
 
         .nav-link:hover {
-            background: rgba(46, 204, 113, 0.1);
-            color: #2ecc71;
-            transform: translateY(-2px);
+            background: #f1f5f9;
+            color: #fb923c;
+        }
+
+        .nav-link.active {
+            background: #ffffff;
+            color: #fb923c;
+            border-bottom-color: #fb923c;
         }
 
         .score-container {
-            padding: 30px;
+            padding: 32px 24px;
             overflow-x: auto;
         }
 
@@ -88,14 +154,15 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
             margin-bottom: 30px;
+            border: 1px solid #f1f5f9;
         }
 
         .score-table th {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
             color: white;
             padding: 20px 15px;
             text-align: center;
@@ -104,13 +171,13 @@
         }
 
         .score-table th:first-child {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
         }
 
         .score-table td {
             padding: 15px;
             text-align: center;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #f1f5f9;
             position: relative;
         }
 
@@ -119,20 +186,20 @@
         }
 
         .score-table tr:hover {
-            background: rgba(46, 204, 113, 0.05);
+            background: rgba(251, 146, 60, 0.04);
         }
 
         .track-cell {
-            background: rgba(46, 204, 113, 0.1);
+            background: #fef3e2;
             font-weight: 600;
-            color: #2ecc71;
+            color: #fb923c;
         }
 
         .score-input {
             width: 60px;
             height: 50px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             text-align: center;
             font-size: 1.2em;
             font-weight: 600;
@@ -140,18 +207,18 @@
             transition: all 0.3s ease;
             -webkit-appearance: none;
             appearance: none;
+            color: #1e293b;
         }
 
         .score-input:focus {
             outline: none;
-            border-color: #2ecc71;
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+            border-color: #fb923c;
+            box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.1);
             transform: scale(1.05);
         }
 
-        /* Verbesserter Placeholder-Style */
         .score-input::placeholder {
-            color: #bdc3c7;
+            color: #94a3b8;
             font-weight: 400;
             opacity: 0.7;
         }
@@ -160,23 +227,22 @@
             opacity: 0.3;
         }
 
-        /* Bessere visuelle Unterscheidung */
         .score-input.has-value {
-            background: #2ecc71;
+            background: #fb923c;
             color: white;
-            border-color: #27ae60;
+            border-color: #f97316;
         }
 
         .score-input:not(.has-value) {
             background: white;
-            color: #2c3e50;
-            border-color: #e9ecef;
+            color: #1e293b;
+            border-color: #e2e8f0;
         }
 
         .totals-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: #f8fafc;
             padding: 25px;
-            border-radius: 15px;
+            border-radius: 16px;
             margin-bottom: 30px;
         }
 
@@ -184,7 +250,8 @@
             font-size: 1.5em;
             margin-bottom: 20px;
             text-align: center;
-            color: #2c3e50;
+            color: #1e293b;
+            font-weight: 700;
         }
 
         .totals-grid {
@@ -196,20 +263,22 @@
         .total-card {
             background: white;
             padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             text-align: center;
             transition: all 0.3s ease;
+            border: 1px solid #f1f5f9;
         }
 
         .total-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         }
 
         .total-card.winner {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
             color: white;
+            border-color: #f97316;
         }
 
         .total-card.winner::before {
@@ -220,7 +289,7 @@
         }
 
         .total-card.winner.tie {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            background: linear-gradient(135deg, #ea7c55 0%, #dc6b47 100%);
             color: white;
         }
 
@@ -235,19 +304,23 @@
             font-size: 1.2em;
             font-weight: 600;
             margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .total-card.winner .player-name {
+            color: white;
         }
 
         .player-total {
             font-size: 2.5em;
             font-weight: bold;
-            color: #2ecc71;
+            color: #fb923c;
         }
 
         .total-card.winner .player-total {
             color: white;
         }
 
-        /* Verbessertes Numpad für Desktop */
         .numpad-overlay {
             position: fixed;
             top: 0;
@@ -267,18 +340,19 @@
         .numpad {
             position: absolute;
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             min-width: 200px;
             transform: translateY(10px);
+            border: 1px solid #f1f5f9;
         }
 
         .numpad-header {
             text-align: center;
             margin-bottom: 15px;
             font-size: 1em;
-            color: #2c3e50;
+            color: #1e293b;
             font-weight: 600;
         }
 
@@ -298,12 +372,12 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            background: #f8f9fa;
-            color: #2c3e50;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
         .numpad-btn:hover {
-            background: #2ecc71;
+            background: #fb923c;
             color: white;
             transform: scale(1.05);
         }
@@ -330,21 +404,21 @@
         }
 
         .numpad-cancel {
-            background: #95a5a6;
+            background: #94a3b8;
             color: white;
         }
 
         .numpad-cancel:hover {
-            background: #7f8c8d;
+            background: #64748b;
         }
 
         .numpad-clear {
-            background: #e74c3c;
+            background: #ea7c55;
             color: white;
         }
 
         .numpad-clear:hover {
-            background: #c0392b;
+            background: #dc6b47;
         }
 
         .action-buttons {
@@ -358,9 +432,9 @@
             flex: 1;
             padding: 18px 30px;
             border: none;
-            border-radius: 15px;
+            border-radius: 16px;
             font-size: 1.1em;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
@@ -372,37 +446,38 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(100, 116, 139, 0.25);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
             color: white;
         }
 
         .btn-success:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(251, 146, 60, 0.25);
         }
 
         .save-indicator {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #2ecc71;
+            background: #fb923c;
             color: white;
             padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(251, 146, 60, 0.3);
             transform: translateY(100px);
             transition: all 0.3s ease;
             z-index: 999;
+            font-weight: 600;
         }
 
         .save-indicator.show {
@@ -444,7 +519,7 @@
 
             .nav {
                 flex-direction: column;
-                gap: 10px;
+                gap: 0;
             }
 
             .game-info {
@@ -452,14 +527,27 @@
                 gap: 10px;
                 text-align: center;
             }
+
+            .gopher-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
         }
 
         /* Touch-Optimierung für iOS */
         @media (hover: none) {
             .score-input {
-                font-size: 16px; /* Verhindert Zoom */
+                font-size: 16px;
                 -webkit-appearance: none;
-                border-radius: 10px;
+                border-radius: 12px;
             }
         }
     </style>
@@ -467,7 +555,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏌️ Score Eingabe</h1>
+            <!-- Gopher Icon -->
+            <img src="/static/gopher_main.png" 
+                 alt="🐹 Gopher Maskottchen" 
+                 class="gopher-icon" 
+                 id="gopherIcon"
+                 onerror="this.style.display='none';">
+            
+            <h1>Score Eingabe</h1>
             <div class="game-info">
                 <div>📍 <strong>{{ game.place }}</strong></div>
                 <div>📅 <strong>{{ game.date }}</strong></div>
@@ -478,7 +573,7 @@
         <div class="nav">
             <a href="/" class="nav-link">🏠 Home</a>
             <a href="/history" class="nav-link">📜 History</a>
-            <a href="/results/{{ game.id }}" class="nav-link">🏆 Ergebnisse</a>
+            <a href="/results/{{ game.id }}" class="nav-link active">🏆 Ergebnisse</a>
         </div>
 
         <div class="score-container">
@@ -508,7 +603,6 @@
                                 max="20"
                                 inputmode="numeric"
                                 pattern="[0-9]*"
-                            >
                                 >
                             </td>
                         {% endfor %}
@@ -540,7 +634,7 @@
         </div>
     </div>
 
-    <!-- Verbessertes Numpad Overlay für Desktop -->
+    <!-- Numpad Overlay -->
     <div class="numpad-overlay" id="numpadOverlay">
         <div class="numpad">
             <div class="numpad-header">
@@ -580,8 +674,14 @@
         let totals = {};
         let numpadVisible = false;
         
-        // Totals initialisieren - sicher
-        const playerIds = [{% for player in players %}{{ player.id }}{% if not loop.last %},{% endif %}{% endfor %}];
+        // Totals initialisieren - Player IDs aus DOM extrahieren
+        const playerIds = [];
+        document.querySelectorAll('.score-input').forEach(input => {
+            const playerId = parseInt(input.dataset.playerId);
+            if (!playerIds.includes(playerId)) {
+                playerIds.push(playerId);
+            }
+        });
         
         playerIds.forEach(id => {
             totals[id] = 0;
@@ -600,25 +700,23 @@
                 }
             });
 
-            // Keyboard Input Event (für direkte Tastatur-Eingabe)
+            // Input Event
             input.addEventListener('input', function() {
                 const value = parseInt(this.value) || 0;
                 
-                // Visuelles Feedback - VERBESSERT
                 if (value > 0) {
                     this.classList.add('has-value');
                 } else {
                     this.classList.remove('has-value');
                 }
                 
-                // Auto-Save nach kurzer Pause
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = setTimeout(() => {
                     saveScore(this);
                 }, 800);
             });
 
-            // Enter-Taste zum Bestätigen
+            // Enter-Taste
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     saveScore(this);
@@ -633,7 +731,6 @@
 
             // Blur Event
             input.addEventListener('blur', function() {
-                // Kleiner Delay damit Numpad-Klicks noch funktionieren
                 setTimeout(() => {
                     if (!numpadVisible) {
                         closeNumpad();
@@ -642,13 +739,12 @@
             });
         });
 
-        // Numpad in der Nähe des Inputs anzeigen
+        // Numpad Functions
         function showNumpadNearInput(input) {
             const overlay = document.getElementById('numpadOverlay');
             const numpad = overlay.querySelector('.numpad');
             const rect = input.getBoundingClientRect();
             
-            // Position berechnen (unterhalb des Inputs, zentriert)
             const left = Math.max(10, Math.min(
                 window.innerWidth - 220, 
                 rect.left + (rect.width / 2) - 100
@@ -661,7 +757,6 @@
             overlay.classList.add('show');
             numpadVisible = true;
             
-            // Header aktualisieren
             const header = numpad.querySelector('.numpad-header');
             header.textContent = `Bahn ${input.dataset.track}`;
         }
@@ -674,19 +769,14 @@
                     currentInput.value = number;
                     currentInput.classList.add('has-value');
                     
-                    // Sofort speichern und schließen
                     saveScore(currentInput);
                     closeNumpad();
                 }
             });
         });
 
-        // Numpad Cancel
-        document.getElementById('numpadCancel').addEventListener('click', function() {
-            closeNumpad();
-        });
+        document.getElementById('numpadCancel').addEventListener('click', closeNumpad);
 
-        // Numpad Clear
         document.getElementById('numpadClear').addEventListener('click', function() {
             if (currentInput) {
                 currentInput.value = '';
@@ -696,14 +786,12 @@
             }
         });
 
-        // Overlay-Klick zum Schließen
         document.getElementById('numpadOverlay').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeNumpad();
             }
         });
 
-        // ESC-Taste zum Schließen
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && numpadVisible) {
                 closeNumpad();
@@ -751,19 +839,18 @@
 
             } catch (error) {
                 console.error('Fehler beim Speichern:', error);
-                input.style.borderColor = '#e74c3c';
+                input.style.borderColor = '#ea7c55';
                 setTimeout(() => {
                     input.style.borderColor = '';
                 }, 2000);
             }
         }
 
-        // Totals anzeigen aktualisieren - mit verbesserter Gleichstand-Logik
+        // Totals Display aktualisieren
         function updateTotalsDisplay() {
             let minScore = Infinity;
             let winners = [];
 
-            // Alle Totals aktualisieren und Minimum finden
             for (const [playerId, total] of Object.entries(totals)) {
                 const totalElement = document.getElementById(`total-${playerId}`);
                 
@@ -771,18 +858,17 @@
                     totalElement.textContent = total;
                 }
 
-                // Minimum Score für Gewinner-Bestimmung (nur wenn > 0)
                 if (total > 0) {
                     if (total < minScore) {
                         minScore = total;
-                        winners = [playerId]; // Neuer bester Score
+                        winners = [playerId];
                     } else if (total === minScore) {
-                        winners.push(playerId); // Gleichstand!
+                        winners.push(playerId);
                     }
                 }
             }
 
-            // Alle Cards zurücksetzen
+            // Cards zurücksetzen
             for (const playerId of Object.keys(totals)) {
                 const cardElement = document.getElementById(`total-card-${playerId}`);
                 if (cardElement) {
@@ -799,23 +885,15 @@
                     if (cardElement) {
                         cardElement.classList.add('winner');
                         
-                        // Bei Gleichstand: zusätzliche tie-Klasse
                         if (isTie) {
                             cardElement.classList.add('tie');
                         }
                     }
                 });
-                
-                // Debug-Info
-                if (isTie) {
-                    console.log(`🤝 Gleichstand! ${winners.length} Spieler mit ${minScore} Punkten`);
-                } else {
-                    console.log(`🏆 Gewinner! Spieler ${winners[0]} mit ${minScore} Punkten`);
-                }
             }
         }
 
-        // Save Indicator anzeigen
+        // Save Indicator
         function showSaveIndicator() {
             const indicator = document.getElementById('saveIndicator');
             indicator.classList.add('show');
@@ -824,46 +902,31 @@
             }, 1500);
         }
 
-        // Initial totals berechnen und anzeigen
-        function calculateInitialTotals() {
-    const inputs = document.querySelectorAll('.score-input');
-    
-    // Totals zurücksetzen
-    for (const playerId in totals) {
-        totals[playerId] = 0;
-    }
-
-    // Scores aus der Server-Daten laden
-    const scoreData = {
-        {% for player in players %}
-        {{ player.id }}: {
-            {% for track in range(1, track_count + 1) %}
-            {{ track }}: {{ score_map.get((player.id, track), 0) }}{% if not loop.last %},{% endif %}
-            {% endfor %}
-        }{% if not loop.last %},{% endif %}
-        {% endfor %}
-    };
-
-    // Inputs mit Daten füllen
-    inputs.forEach(input => {
-        const playerId = parseInt(input.dataset.playerId);
-        const track = parseInt(input.dataset.track);
-        const value = scoreData[playerId][track];
-        
-        if (value > 0) {
-            input.value = value;
-            input.classList.add('has-value');
-            totals[playerId] += value;
-        } else {
-            input.value = '';
-            input.classList.remove('has-value');
-        }
-    });
-
-    updateTotalsDisplay();
-}
-
         // Initial Setup
+        function calculateInitialTotals() {
+            const inputs = document.querySelectorAll('.score-input');
+            
+            // Totals zurücksetzen
+            for (const playerId in totals) {
+                totals[playerId] = 0;
+            }
+
+            // Alle Score-Inputs durchgehen und Werte laden
+            inputs.forEach(input => {
+                const playerId = parseInt(input.dataset.playerId);
+                const value = parseInt(input.value) || 0;
+                
+                if (value > 0) {
+                    input.classList.add('has-value');
+                    totals[playerId] = (totals[playerId] || 0) + value;
+                } else {
+                    input.classList.remove('has-value');
+                }
+            });
+
+            updateTotalsDisplay();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             calculateInitialTotals();
         });
