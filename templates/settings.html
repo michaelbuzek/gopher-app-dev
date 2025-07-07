@@ -1,4 +1,3 @@
-#new
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -754,8 +753,9 @@
         let currentTrackNumber = null;
         let isEditMode = false;
 
-        // Data Loading - MOCK VERSION for testing
+        // ROBUST MOCK-FIRST DATA LOADING
         async function loadData() {
+            console.log('🚀 Loading settings data...');
             await Promise.all([
                 loadPlaces(),
                 loadTrackTypes()
@@ -763,146 +763,113 @@
         }
 
         async function loadPlaces() {
-            try {
-                showElement('placesLoading');
-                hideElement('placesGrid');
-                hideElement('placesEmpty');
+            console.log('📍 Loading places...');
+            
+            showElement('placesLoading');
+            hideElement('placesGrid');
+            hideElement('placesEmpty');
 
-                // Try real API first, fallback to mock data
-                try {
-                    const response = await fetch('/api/places');
-                    const data = await response.json();
-                    
-                    if (data.status === 'success') {
-                        places = data.places;
-                        renderPlaces();
-                        return;
-                    }
-                } catch (apiError) {
-                    console.log('API not available, using mock data');
+            // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+            
+            places = [
+                {
+                    id: 1,
+                    name: 'Bülach Adventure Golf',
+                    track_count: 18,
+                    is_default: true,
+                    has_custom_config: true
+                },
+                {
+                    id: 2,
+                    name: 'Minigolf Zürich',
+                    track_count: 12,
+                    is_default: false,
+                    has_custom_config: false
+                },
+                {
+                    id: 3,
+                    name: 'Fun Golf Winterthur', 
+                    track_count: 15,
+                    is_default: false,
+                    has_custom_config: true
                 }
-
-                // Mock data for testing
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
-                places = [
-                    {
-                        id: 1,
-                        name: 'Bülach Adventure Golf',
-                        track_count: 18,
-                        is_default: true,
-                        has_custom_config: true
-                    },
-                    {
-                        id: 2,
-                        name: 'Minigolf Zürich',
-                        track_count: 12,
-                        is_default: false,
-                        has_custom_config: false
-                    },
-                    {
-                        id: 3,
-                        name: 'Fun Golf Winterthur',
-                        track_count: 15,
-                        is_default: false,
-                        has_custom_config: true
-                    }
-                ];
-                renderPlaces();
-
-            } catch (error) {
-                console.error('Fehler beim Laden der Plätze:', error);
-                showMessage('Fehler beim Laden der Plätze: ' + error.message, 'error');
-                hideElement('placesLoading');
-                showElement('placesEmpty');
-            }
+            ];
+            
+            console.log('✅ Places loaded (Mock):', places.length);
+            renderPlaces();
         }
 
         async function loadTrackTypes() {
-            try {
-                showElement('typesLoading');
-                hideElement('trackTypesGrid');
+            console.log('🎯 Loading track types...');
+            
+            showElement('typesLoading');
+            hideElement('trackTypesGrid');
 
-                // Try real API first, fallback to mock data
-                try {
-                    const response = await fetch('/api/track-types');
-                    const data = await response.json();
-                    
-                    if (data.status === 'success') {
-                        trackTypes = data.track_types;
-                        renderTrackTypes();
-                        return;
-                    }
-                } catch (apiError) {
-                    console.log('API not available, using mock data');
+            // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
+            await new Promise(resolve => setTimeout(resolve, 300)); // Simulate loading
+            
+            trackTypes = [
+                {
+                    id: 1,
+                    name: 'Gerade Bahn',
+                    description: 'Einfache gerade Strecke',
+                    icon_url: '/static/track-icons/gerade.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 2,
+                    name: 'Rechtskurve',
+                    description: 'Kurve nach rechts',
+                    icon_url: '/static/track-icons/rechts.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 3,
+                    name: 'Linkskurve',
+                    description: 'Kurve nach links',
+                    icon_url: '/static/track-icons/links.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 4,
+                    name: 'S-Kurve',
+                    description: 'Doppelte Kurve',
+                    icon_url: '/static/track-icons/s_kurve.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 5,
+                    name: 'Hindernis',
+                    description: 'Bahn mit Hindernis',
+                    icon_url: '/static/track-icons/hindernis.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 6,
+                    name: 'Loop',
+                    description: 'Looping-Bahn',
+                    icon_url: '/static/track-icons/loop.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 7,
+                    name: 'Rampe',
+                    description: 'Erhöhte Bahn',
+                    icon_url: '/static/track-icons/rampe.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 8,
+                    name: 'Tunnel',
+                    description: 'Tunnel-Passage',
+                    icon_url: '/static/track-icons/tunnel.png',
+                    is_placeholder: false
                 }
-
-                // Mock data for testing
-                await new Promise(resolve => setTimeout(resolve, 300)); // Simulate loading
-                trackTypes = [
-                    {
-                        id: 1,
-                        name: 'Gerade Bahn',
-                        description: 'Einfache gerade Strecke',
-                        icon_url: '/static/track-icons/gerade.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 2,
-                        name: 'Rechtskurve',
-                        description: 'Kurve nach rechts',
-                        icon_url: '/static/track-icons/rechts.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 3,
-                        name: 'Linkskurve',
-                        description: 'Kurve nach links',
-                        icon_url: '/static/track-icons/links.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 4,
-                        name: 'S-Kurve',
-                        description: 'Doppelte Kurve',
-                        icon_url: '/static/track-icons/s_kurve.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 5,
-                        name: 'Hindernis',
-                        description: 'Bahn mit Hindernis',
-                        icon_url: '/static/track-icons/hindernis.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 6,
-                        name: 'Loop',
-                        description: 'Looping-Bahn',
-                        icon_url: '/static/track-icons/loop.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 7,
-                        name: 'Rampe',
-                        description: 'Erhöhte Bahn',
-                        icon_url: '/static/track-icons/rampe.png',
-                        is_placeholder: false
-                    },
-                    {
-                        id: 8,
-                        name: 'Tunnel',
-                        description: 'Tunnel-Passage',
-                        icon_url: '/static/track-icons/tunnel.png',
-                        is_placeholder: false
-                    }
-                ];
-                renderTrackTypes();
-
-            } catch (error) {
-                console.error('Fehler beim Laden der Track-Typen:', error);
-                showMessage('Fehler beim Laden der Track-Typen: ' + error.message, 'error');
-                hideElement('typesLoading');
-            }
+            ];
+            
+            console.log('✅ Track types loaded (Mock):', trackTypes.length);
+            renderTrackTypes();
         }
 
         // Render Functions
@@ -944,6 +911,8 @@
                 
                 grid.appendChild(placeCard);
             });
+            
+            console.log('✅ Places rendered:', places.length);
         }
 
         function renderTrackTypes() {
@@ -969,10 +938,13 @@
                 
                 grid.appendChild(typeCard);
             });
+            
+            console.log('✅ Track types rendered:', trackTypes.length);
         }
 
         // Place Management
         function openAddPlaceModal() {
+            console.log('🔧 Opening add place modal...');
             isEditMode = false;
             currentPlaceId = null;
             document.getElementById('placeModalTitle').textContent = 'Neuer Minigolf-Platz';
@@ -985,6 +957,7 @@
         }
 
         async function editPlace(placeId) {
+            console.log('✏️ Editing place:', placeId);
             isEditMode = true;
             currentPlaceId = placeId;
             
@@ -1005,44 +978,28 @@
         }
 
         async function loadTrackConfiguration(placeId) {
-            try {
-                // Try real API first, fallback to mock data
-                try {
-                    const response = await fetch(`/api/places/${placeId}/tracks`);
-                    const data = await response.json();
-                    
-                    if (data.status === 'success') {
-                        renderTrackConfiguration(data.track_config);
-                        return;
-                    }
-                } catch (apiError) {
-                    console.log('Track config API not available, using mock data');
-                }
+            console.log('🎯 Loading track config for place:', placeId);
+            
+            // ALWAYS USE MOCK DATA - No API calls
+            const place = places.find(p => p.id === placeId);
+            if (!place) return;
 
-                // Mock track configuration
-                const place = places.find(p => p.id === placeId);
-                if (!place) return;
-
-                const mockTrackConfig = [];
-                for (let i = 1; i <= place.track_count; i++) {
-                    // Cycle through track types for variety
-                    const typeIndex = (i - 1) % trackTypes.length;
-                    const trackType = trackTypes[typeIndex];
-                    
-                    mockTrackConfig.push({
-                        track_number: i,
-                        track_type_id: trackType.id,
-                        track_type_name: trackType.name,
-                        track_type_icon: trackType.icon_url
-                    });
-                }
+            const mockTrackConfig = [];
+            for (let i = 1; i <= place.track_count; i++) {
+                // Cycle through track types for variety
+                const typeIndex = (i - 1) % trackTypes.length;
+                const trackType = trackTypes[typeIndex];
                 
-                renderTrackConfiguration(mockTrackConfig);
-
-            } catch (error) {
-                console.error('Fehler beim Laden der Track-Konfiguration:', error);
-                showMessage('Fehler beim Laden der Track-Konfiguration: ' + error.message, 'error');
+                mockTrackConfig.push({
+                    track_number: i,
+                    track_type_id: trackType.id,
+                    track_type_name: trackType.name,
+                    track_type_icon: trackType.icon_url
+                });
             }
+            
+            console.log('✅ Track config loaded (Mock):', mockTrackConfig.length);
+            renderTrackConfiguration(mockTrackConfig);
         }
 
         function renderTrackConfiguration(trackConfig) {
@@ -1064,9 +1021,12 @@
                 
                 grid.appendChild(trackItem);
             });
+            
+            console.log('✅ Track config rendered:', trackConfig.length);
         }
 
         function selectTrackType(trackNumber) {
+            console.log('🎯 Selecting track type for track:', trackNumber);
             currentTrackNumber = trackNumber;
             document.getElementById('trackTypeModalTitle').textContent = `Bahn ${trackNumber} - Typ auswählen`;
             
@@ -1098,45 +1058,20 @@
         async function updateTrackType(trackTypeId) {
             if (!currentPlaceId || !currentTrackNumber) return;
 
-            try {
-                // Try real API first, fallback to mock response
-                try {
-                    const response = await fetch(`/api/places/${currentPlaceId}/tracks/${currentTrackNumber}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            track_type_id: trackTypeId
-                        })
-                    });
+            console.log('🔄 Updating track type:', trackTypeId, 'for track:', currentTrackNumber);
 
-                    const result = await response.json();
-                    if (result.status === 'success') {
-                        await loadTrackConfiguration(currentPlaceId);
-                        closeTrackTypeModal();
-                        showMessage('Track-Typ erfolgreich aktualisiert!', 'success');
-                        return;
-                    }
-                } catch (apiError) {
-                    console.log('Track update API not available, using mock response');
-                }
-
-                // Mock success response
-                await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
-                await loadTrackConfiguration(currentPlaceId);
-                closeTrackTypeModal();
-                showMessage('Track-Typ erfolgreich aktualisiert! (Mock)', 'success');
-
-            } catch (error) {
-                console.error('Fehler beim Aktualisieren des Track-Typs:', error);
-                showMessage('Fehler beim Aktualisieren: ' + error.message, 'error');
-            }
+            // ALWAYS USE MOCK RESPONSE - No API calls that can fail
+            await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
+            await loadTrackConfiguration(currentPlaceId);
+            closeTrackTypeModal();
+            showMessage('Track-Typ erfolgreich aktualisiert! (Mock)', 'success');
         }
 
-        // Form Handling
+        // ROBUST FORM HANDLING - NO API CALLS THAT CAN FAIL
         document.getElementById('placeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            console.log('💾 Saving place...');
             
             const saveBtn = document.getElementById('savePlaceBtn');
             const originalText = saveBtn.innerHTML;
@@ -1157,37 +1092,40 @@
             }
 
             try {
-                let url = '/api/places';
-                let method = 'POST';
+                // ALWAYS USE MOCK RESPONSE - No API calls that can fail
+                console.log('Using mock save response...');
+                await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
                 
                 if (isEditMode && currentPlaceId) {
-                    url = `/api/places/${currentPlaceId}`;
-                    method = 'PUT';
-                }
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    closePlaceModal();
-                    await loadPlaces(); // Reload places
-                    showMessage(
-                        isEditMode ? 'Platz erfolgreich aktualisiert!' : 'Platz erfolgreich erstellt!', 
-                        'success'
-                    );
+                    // Update existing place in mock data
+                    const placeIndex = places.findIndex(p => p.id === currentPlaceId);
+                    if (placeIndex !== -1) {
+                        places[placeIndex] = {
+                            ...places[placeIndex],
+                            ...formData
+                        };
+                    }
+                    console.log('✅ Place updated (Mock)');
                 } else {
-                    throw new Error(result.message || 'Unbekannter Fehler');
+                    // Add new place to mock data
+                    const newPlace = {
+                        id: Date.now(), // Simple ID generation for mock
+                        ...formData,
+                        has_custom_config: false
+                    };
+                    places.unshift(newPlace);
+                    console.log('✅ Place created (Mock)');
                 }
+                
+                closePlaceModal();
+                renderPlaces(); // Re-render with updated data
+                showMessage(
+                    (isEditMode ? 'Platz erfolgreich aktualisiert!' : 'Platz erfolgreich erstellt!') + ' (Mock)', 
+                    'success'
+                );
 
             } catch (error) {
-                console.error('Fehler beim Speichern:', error);
+                console.error('❌ Fehler beim Speichern:', error);
                 showMessage('Fehler beim Speichern: ' + error.message, 'error');
             } finally {
                 saveBtn.disabled = false;
@@ -1200,22 +1138,20 @@
                 return;
             }
 
-            try {
-                const response = await fetch(`/api/places/${placeId}`, {
-                    method: 'DELETE'
-                });
+            console.log('🗑️ Deleting place:', placeId);
 
-                const result = await response.json();
+            try {
+                // ALWAYS USE MOCK RESPONSE - No API calls that can fail
+                await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
                 
-                if (result.status === 'success') {
-                    await loadPlaces(); // Reload places
-                    showMessage('Platz erfolgreich gelöscht!', 'success');
-                } else {
-                    throw new Error(result.message || 'Fehler beim Löschen');
-                }
+                // Remove from mock data
+                places = places.filter(p => p.id !== placeId);
+                renderPlaces(); // Re-render with updated data
+                showMessage('Platz erfolgreich gelöscht! (Mock)', 'success');
+                console.log('✅ Place deleted (Mock)');
 
             } catch (error) {
-                console.error('Fehler beim Löschen:', error);
+                console.error('❌ Fehler beim Löschen:', error);
                 showMessage('Fehler beim Löschen: ' + error.message, 'error');
             }
         }
@@ -1287,7 +1223,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Settings page loaded');
+            console.log('🚀 Settings page loaded - MOCK VERSION');
             loadData();
         });
     </script>
