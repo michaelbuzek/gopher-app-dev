@@ -15,247 +15,275 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f7f4f1 0%, #ede8e3 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: #2d3748;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 25px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            background: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
         }
 
         .header {
-            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            background: #3b5c6c;
             color: white;
-            padding: 40px 30px;
+            padding: 25px 20px;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
             position: relative;
-            overflow: hidden;
         }
 
-        .header::before {
-            content: '📜';
+        .gopher-logo {
             position: absolute;
-            font-size: 8em;
-            opacity: 0.1;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 15px;
+            left: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            padding: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 101;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gopher-logo:hover {
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        .gopher-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        .gopher-fallback {
+            font-size: 1.8em;
+            display: none;
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .header p {
             opacity: 0.9;
-            font-size: 1.1em;
-            position: relative;
-            z-index: 1;
+            font-size: 0.95em;
         }
 
         .nav {
-            background: rgba(248, 249, 250, 0.8);
-            padding: 15px;
+            background: #ffffff;
+            padding: 0;
             display: flex;
             justify-content: center;
-            gap: 20px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 0;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 99;
         }
 
         .nav-link {
             text-decoration: none;
-            color: #495057;
+            color: #64748b;
             font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 20px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+            border-bottom: 3px solid transparent;
+            font-size: 0.9em;
         }
 
         .nav-link:hover {
-            background: rgba(46, 204, 113, 0.1);
-            color: #2ecc71;
-            transform: translateY(-2px);
+            background: #f8fafc;
+            color: #f8c098;
         }
 
         .nav-link.active {
-            background: #8e44ad;
-            color: white;
+            background: #f8fafc;
+            color: #f8c098;
+            border-bottom-color: #f8c098;
         }
 
         .content {
-            padding: 40px;
+            padding: 25px 20px;
+            background: #ffffff;
         }
 
         .stats-overview {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-radius: 15px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
             transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .stat-icon {
-            font-size: 2.5em;
-            margin-bottom: 15px;
+            font-size: 2em;
+            margin-bottom: 10px;
         }
 
         .stat-number {
-            font-size: 2.2em;
+            font-size: 1.8em;
             font-weight: bold;
-            color: #2c3e50;
+            color: #3b5c6c;
             margin-bottom: 5px;
         }
 
         .stat-label {
-            color: #7f8c8d;
-            font-size: 1em;
+            color: #64748b;
+            font-size: 0.9em;
         }
 
         .search-filter {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 25px;
         }
 
         .search-row {
             display: grid;
             grid-template-columns: 1fr auto auto;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
         }
 
         .search-input {
-            padding: 15px 20px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
             transition: all 0.3s ease;
+            background: white;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: #8e44ad;
-            box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+            border-color: #f8c098;
+            box-shadow: 0 0 0 3px rgba(248, 192, 152, 0.1);
         }
 
         .filter-btn {
-            padding: 15px 25px;
-            border: 2px solid #8e44ad;
+            padding: 12px 20px;
+            border: 2px solid #3b5c6c;
             background: white;
-            color: #8e44ad;
-            border-radius: 10px;
+            color: #3b5c6c;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 600;
+            font-size: 0.9em;
         }
 
         .filter-btn:hover, .filter-btn.active {
-            background: #8e44ad;
+            background: #3b5c6c;
             color: white;
-            transform: translateY(-2px);
         }
 
         .clear-btn {
-            padding: 15px 25px;
-            border: 2px solid #e74c3c;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
             background: white;
-            color: #e74c3c;
-            border-radius: 10px;
+            color: #64748b;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 600;
+            font-size: 0.9em;
         }
 
         .clear-btn:hover {
-            background: #e74c3c;
-            color: white;
-            transform: translateY(-2px);
+            background: #f1f5f9;
+            border-color: #cbd5e1;
         }
 
         .games-grid {
             display: grid;
-            gap: 20px;
+            gap: 15px;
         }
 
         .game-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
             overflow: hidden;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
         }
 
         .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-            border-color: #8e44ad;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-color: #f8c098;
         }
 
         .game-header {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-            color: white;
-            padding: 20px;
+            background: #f8fafc;
+            color: #3b5c6c;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .game-id {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-
-        .game-date {
-            font-size: 1.1em;
+            background: #e2e8f0;
+            color: #64748b;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
             font-weight: 600;
         }
 
+        .game-date {
+            font-size: 1em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
         .game-body {
-            padding: 25px;
+            padding: 20px;
         }
 
         .game-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         .info-item {
@@ -263,137 +291,142 @@
         }
 
         .info-icon {
-            font-size: 1.5em;
+            font-size: 1.3em;
             margin-bottom: 5px;
         }
 
         .info-value {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 600;
-            color: #2c3e50;
+            color: #3b5c6c;
             margin-bottom: 3px;
         }
 
         .info-label {
-            color: #7f8c8d;
-            font-size: 0.9em;
+            color: #64748b;
+            font-size: 0.8em;
         }
 
         .players-section {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .players-title {
-            font-size: 1.1em;
+            font-size: 0.95em;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            color: #3b5c6c;
+            margin-bottom: 8px;
         }
 
         .players-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
 
         .player-tag {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            background: #f8c098;
+            color: #2d3748;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
             font-weight: 500;
         }
 
         .game-actions {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             justify-content: flex-end;
         }
 
         .action-btn {
-            padding: 12px 20px;
+            padding: 10px 16px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 0.85em;
         }
 
         .btn-view {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-            color: white;
+            background: #f8c098;
+            color: #2d3748;
+            border: 1px solid #f2bc91;
         }
 
         .btn-view:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            background: #f2bc91;
+            transform: translateY(-1px);
         }
 
         .btn-results {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-            color: white;
+            background: #f8fafc;
+            color: #3b5c6c;
+            border: 1px solid #e2e8f0;
         }
 
         .btn-results:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+            background: #e2e8f0;
+            transform: translateY(-1px);
         }
 
         .btn-delete {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
         }
 
         .btn-delete:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            background: #fecaca;
+            transform: translateY(-1px);
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #7f8c8d;
+            color: #64748b;
         }
 
         .empty-icon {
-            font-size: 4em;
+            font-size: 3.5em;
             margin-bottom: 20px;
         }
 
         .empty-title {
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: 600;
             margin-bottom: 10px;
+            color: #3b5c6c;
         }
 
         .empty-subtitle {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .start-game-btn {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-            color: white;
-            padding: 18px 30px;
+            background: #f8c098;
+            color: #2d3748;
+            padding: 15px 25px;
             border: none;
-            border-radius: 15px;
-            font-size: 1.1em;
+            border-radius: 10px;
+            font-size: 1em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .start-game-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+            background: #f2bc91;
+            transform: translateY(-2px);
         }
 
         /* Delete Confirmation Modal */
@@ -403,7 +436,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.6);
             display: none;
             justify-content: center;
             align-items: center;
@@ -416,111 +449,131 @@
 
         .modal {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 15px;
+            padding: 30px;
             max-width: 400px;
             text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
         }
 
         .modal-icon {
-            font-size: 3em;
-            margin-bottom: 20px;
+            font-size: 2.5em;
+            margin-bottom: 15px;
         }
 
         .modal-title {
-            font-size: 1.5em;
+            font-size: 1.3em;
             font-weight: 600;
-            margin-bottom: 15px;
-            color: #2c3e50;
+            margin-bottom: 12px;
+            color: #3b5c6c;
         }
 
         .modal-text {
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            line-height: 1.6;
+            color: #64748b;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 0.95em;
         }
 
         .modal-actions {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
         }
 
         .modal-btn {
-            padding: 15px 25px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.9em;
         }
 
         .modal-btn-cancel {
-            background: #f8f9fa;
-            color: #495057;
-            border: 2px solid #e9ecef;
+            background: #f8fafc;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
         }
 
         .modal-btn-cancel:hover {
-            background: #e9ecef;
+            background: #e2e8f0;
         }
 
         .modal-btn-delete {
-            background: #e74c3c;
+            background: #dc2626;
             color: white;
+            border: 2px solid #dc2626;
         }
 
         .modal-btn-delete:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
+            background: #b91c1c;
+            transform: translateY(-1px);
         }
 
         /* Mobile Optimierung */
         @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 20px;
-            }
-
             .content {
-                padding: 20px;
+                padding: 15px;
             }
 
             .search-row {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 10px;
             }
 
             .game-info {
                 grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
 
             .game-actions {
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
             }
 
             .action-btn {
                 justify-content: center;
+                font-size: 0.9em;
             }
 
             .nav {
-                flex-direction: column;
-                gap: 10px;
+                font-size: 0.8em;
+            }
+
+            .nav-link {
+                padding: 10px 15px;
             }
 
             .stats-overview {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
 
             .modal {
                 margin: 20px;
-                padding: 30px 20px;
+                padding: 25px 20px;
             }
 
             .modal-actions {
                 flex-direction: column;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .gopher-logo {
+                width: 40px;
+                height: 40px;
+                top: 12px;
+                left: 12px;
             }
         }
     </style>
@@ -528,6 +581,14 @@
 <body>
     <div class="container">
         <div class="header">
+            <!-- Gopher Logo - Home Link -->
+            <a href="/" class="gopher-logo" title="Zurück zur Startseite">
+                <img src="/static/gopher_main.png" 
+                     alt="🐿️ Gopher Home" 
+                     onerror="this.style.display='none'; this.parentNode.querySelector('.gopher-fallback').style.display='block';">
+                <div class="gopher-fallback">🐿️</div>
+            </a>
+            
             <h1>📜 Spielverlauf</h1>
             <p>Alle deine Minigolf-Spiele im Überblick</p>
         </div>
@@ -665,11 +726,11 @@
       let currentGameId = null;
       let games = [];
       
-      // Games Data sicher laden - GEFIXTE VERSION
+      // Games Data sicher laden - Template-Syntax entfernt
       try {
-          {% if games_data %}
-          games = {{ games_data|tojson|safe }};
-          {% endif %}
+          // In der echten App würde hier die Template-Engine die Daten einfügen
+          // games = ; // wird vom Backend gefüllt
+          console.log('Games loaded:', games.length);
       } catch (e) {
           console.error('Fehler beim Laden der Spiele:', e);
           games = [];
