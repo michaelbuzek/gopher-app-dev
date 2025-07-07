@@ -1,0 +1,395 @@
+#!/bin/bash
+# 🐹 Gopher Minigolf App: FIXED PostgreSQL Migration Script
+# Now installs dependencies BEFORE using Flask-Migrate
+
+set -e  # Exit on any error
+
+echo "🐹 ===========================================" 
+echo "🐹 GOPHER MINIGOLF: PostgreSQL Migration"
+echo "🐹 ==========================================="
+echo ""
+
+# Color functions for pretty output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+# Check if we're in the right directory
+if [ ! -f "app.py" ]; then
+    error "app.py not found! Please run this script in your gopher-app directory."
+    exit 1
+fi
+
+if [ ! -f "requirements.txt" ]; then
+    error "requirements.txt not found! Please run this script in your gopher-app directory."
+    exit 1
+fi
+
+echo "🚀 Starting automatic migration..."
+echo ""
+
+# ==========================================
+# STEP 1: Backup existing files
+# ==========================================
+info "Step 1: Creating backups..."
+
+# Create backup directory
+mkdir -p migration_backup
+cp app.py migration_backup/app.py.backup
+cp requirements.txt migration_backup/requirements.txt.backup
+
+if [ -f ".gitignore" ]; then
+    cp .gitignore migration_backup/.gitignore.backup
+fi
+
+success "Backup created in migration_backup/"
+
+# ==========================================
+# STEP 2: Update requirements.txt
+# ==========================================
+info "Step 2: Updating requirements.txt..."
+
+cat > requirements.txt << 'EOF'
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+psycopg2-binary==2.9.7
+Werkzeug==2.3.7
+gunicorn==21.2.0
+python-dotenv==1.0.0
+EOF
+
+success "requirements.txt updated with PostgreSQL dependencies"
+
+# ==========================================
+# STEP 3: Install new dependencies FIRST
+# ==========================================
+info "Step 3: Installing new dependencies..."
+
+pip install -r requirements.txt
+
+success "New dependencies installed (including Flask-Migrate)"
+
+# ==========================================
+# STEP 4: Update app.py with Flask-Migrate
+# ==========================================
+info "Step 4: Adding Flask-Migrate to app.py..."
+
+# Check if Flask-Migrate is already imported
+if grep -q "flask_migrate" app.py; then
+    warning "Flask-Migrate already imported in app.py - skipping"
+else
+    # Add Flask-Migrate import after Flask-SQLAlchemy import
+    sed -i.bak 's/from flask_sqlalchemy import SQLAlchemy/from flask_sqlalchemy import SQLAlchemy\nfrom flask_migrate import Migrate/' app.py
+    
+    # Add Migrate initialization after db = SQLAlchemy(app)
+    sed -i.bak '/db = SQLAlchemy(app)/a\
+migrate = Migrate(app, db)' app.py
+    
+    # Add dotenv import and load at the top
+    sed -i.bak 's/from datetime import datetime/from datetime import datetime\nfrom dotenv import load_dotenv/' app.py
+    
+    # Add load_dotenv() call after imports
+    sed -i.bak '/logger = logging.getLogger(__name__)/a\
+\
+# Load environment variables\
+load_dotenv()' app.py
+    
+    # Remove the .bak files
+    rm -f app.py.bak
+    
+    success "Flask-Migrate added to app.py"
+fi
+
+# ==========================================
+# STEP 5: Create build.sh for Render
+# ==========================================
+info "Step 5: Creating build.sh for Render deployment..."
+
+cat > build.sh << 'EOF'
+#!/usr/bin/env bash
+# 🐹 Gopher Minigolf App Build Script for Render
+
+set -o errexit  # Exit on any error
+
+echo "🐹 Gopher App Build Starting..."
+
+# Install Python dependencies
+echo "📦 Installing dependencies..."
+pip install -r requirements.txt
+
+# Run database migrations
+echo "🗄️ Running database migrations..."
+flask db upgrade
+
+echo "✅ Gopher App Build Complete!"
+EOF
+
+# Make build.sh executable
+chmod +x build.sh
+
+success "build.sh created and made executable"
+
+# ==========================================
+# STEP 6: Create/Update .gitignore
+# ==========================================
+info "Step 6: Setting up .gitignore..."
+
+cat > .gitignore << 'EOF'
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Migration backups
+migration_backup/
+
+# Flask
+instance/
+.webassets-cache
+
+# Testing
+.tox/
+.coverage
+htmlcov/
+.pytest_cache/
+EOF
+
+success ".gitignore created/updated"
+
+# ==========================================
+# STEP 7: Create .env template
+# ==========================================
+info "Step 7: Creating .env template..."
+
+cat > .env.template << 'EOF'
+# 🐹 Gopher Minigolf App - Local Development Environment
+# Copy this to .env and customize for your local setup
+
+# Database (use SQLite for local development)
+DATABASE_URL=sqlite:///gopher.db
+
+# Environment
+ENVIRONMENT=development
+FLASK_APP=app.py
+FLASK_DEBUG=True
+
+# Optional: For local PostgreSQL testing
+# DATABASE_URL=postgresql://username:password@localhost/gopher_db
+EOF
+
+cat > .env << 'EOF'
+# 🐹 Gopher Minigolf App - Local Development
+DATABASE_URL=sqlite:///gopher.db
+ENVIRONMENT=development
+FLASK_APP=app.py
+FLASK_DEBUG=True
+EOF
+
+success ".env template and .env created"
+
+# ==========================================
+# STEP 8: Initialize Flask-Migrate (NOW it will work!)
+# ==========================================
+info "Step 8: Initializing Flask-Migrate..."
+
+# Set Flask app environment variable
+export FLASK_APP=app.py
+
+# Initialize migrations (only if not already initialized)
+if [ ! -d "migrations" ]; then
+    info "Creating migrations directory..."
+    flask db init
+    success "Flask-Migrate initialized"
+else
+    warning "Migrations directory already exists - skipping init"
+fi
+
+# Create initial migration
+info "Creating initial migration..."
+flask db migrate -m "Initial Gopher App migration with PostgreSQL support"
+
+success "Initial migration created"
+
+# ==========================================
+# STEP 9: Test local migration
+# ==========================================
+info "Step 9: Testing migration locally..."
+
+if [ -f "gopher.db" ]; then
+    warning "Existing SQLite database found - backing up..."
+    cp gopher.db migration_backup/gopher.db.backup
+fi
+
+# Apply migration locally
+flask db upgrade
+
+success "Migration tested successfully with local SQLite"
+
+# ==========================================
+# STEP 10: Create Render deployment guide
+# ==========================================
+info "Step 10: Creating deployment guide..."
+
+cat > RENDER_DEPLOYMENT.md << 'EOF'
+# 🐹 Gopher App: Render Deployment Guide
+
+## PostgreSQL Database Setup
+
+1. **Create PostgreSQL Database on Render:**
+   - Go to: https://dashboard.render.com
+   - Click: "New +" → "PostgreSQL"
+   - Name: `gopher-minigolf-db`
+   - Database: `gopher_db`
+   - User: `gopher_user`
+   - Plan: **Free**
+   - Region: Choose closest to your users
+
+2. **Copy Database URL:**
+   - After creation, copy the **Internal Database URL**
+   - Format: `postgresql://gopher_user:password@hostname/gopher_db`
+
+## Web Service Setup
+
+1. **Create Web Service:**
+   - "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Branch: `main`
+
+2. **Configuration:**
+   - **Name**: `gopher-minigolf-app`
+   - **Environment**: `Python 3`
+   - **Build Command**: `./build.sh`
+   - **Start Command**: `gunicorn app:app`
+
+3. **Environment Variables:**
+   Go to Environment tab and add:
+   
+   | Key | Value |
+   |-----|-------|
+   | `DATABASE_URL` | `[Your Internal Database URL from step 1]` |
+   | `ENVIRONMENT` | `production` |
+   | `FLASK_APP` | `app.py` |
+
+4. **Deploy:**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your app!
+
+## Verification
+
+After deployment, check:
+- `https://your-app.onrender.com/health` → should return "healthy"
+- `https://your-app.onrender.com/db-info` → should show PostgreSQL connection
+- Create a test game → should persist between deployments!
+
+## 🎉 Your app is now PostgreSQL-powered!
+EOF
+
+success "Render deployment guide created: RENDER_DEPLOYMENT.md"
+
+# ==========================================
+# STEP 11: Git preparation
+# ==========================================
+info "Step 11: Preparing for Git commit..."
+
+# Add all new files to git
+git add .
+git add migrations/ 2>/dev/null || true  # Ignore error if migrations doesn't exist
+
+success "All files staged for commit"
+
+# ==========================================
+# FINAL SUMMARY
+# ==========================================
+echo ""
+echo "🎉 ===========================================" 
+echo "🎉 MIGRATION COMPLETE! 🐹⛳"
+echo "🎉 ==========================================="
+echo ""
+
+success "Your Gopher App is now PostgreSQL-ready!"
+echo ""
+
+info "What was done:"
+echo "  ✅ Backup created (migration_backup/)"
+echo "  ✅ requirements.txt updated with PostgreSQL dependencies"
+echo "  ✅ New dependencies installed (Flask-Migrate, psycopg2-binary, etc.)"
+echo "  ✅ app.py enhanced with Flask-Migrate support"
+echo "  ✅ build.sh created for Render deployment"
+echo "  ✅ .gitignore configured"
+echo "  ✅ .env setup for local development"
+echo "  ✅ Flask-Migrate initialized"
+echo "  ✅ Initial migration created"
+echo "  ✅ Migration tested locally with SQLite"
+echo "  ✅ Deployment guide created (RENDER_DEPLOYMENT.md)"
+echo "  ✅ Files staged for Git commit"
+echo ""
+
+warning "NEXT STEPS:"
+echo ""
+echo "1. 🗄️  Create PostgreSQL database on Render:"
+echo "   https://dashboard.render.com → New+ → PostgreSQL"
+echo ""
+echo "2. 📖 Follow the deployment guide:"
+echo "   cat RENDER_DEPLOYMENT.md"
+echo ""
+echo "3. 🚀 Commit and push to trigger deployment:"
+echo "   git commit -m 'Migrate to PostgreSQL 🐹⛳'"
+echo "   git push origin main"
+echo ""
+echo "4. ✅ Verify deployment:"
+echo "   Check /health endpoint on your Render app"
+echo ""
+
+success "Ready to deploy! Your minigolf app will never lose data again! 🐹⛳"
+
+echo ""
+echo "🐹 ===========================================" 
+echo ""

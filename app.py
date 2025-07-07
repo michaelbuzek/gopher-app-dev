@@ -1,15 +1,19 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from sqlalchemy import text
 import json
 import os
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
 app = Flask(__name__)
 
 # ------------------------------
@@ -38,7 +42,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 # ------------------------------
 # Environment Helper Functions
 # ------------------------------
