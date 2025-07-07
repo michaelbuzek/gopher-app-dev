@@ -778,6 +778,7 @@
         let currentPlaceId = null;
         let currentTrackNumber = null;
         let isEditMode = false;
+        let currentTrackConfig = []; // Store current track configuration
 
         // ROBUST MOCK-FIRST DATA LOADING
         async function loadData() {
@@ -840,56 +841,56 @@
                     id: 1,
                     name: 'Gerade Bahn',
                     description: 'Einfache gerade Strecke',
-                    icon_url: '🏌️',
+                    icon_url: '/static/track-icons/gerade.png',
                     is_placeholder: false
                 },
                 {
                     id: 2,
                     name: 'Rechtskurve',
                     description: 'Kurve nach rechts',
-                    icon_url: '↗️',
+                    icon_url: '/static/track-icons/rechtskurve.png',
                     is_placeholder: false
                 },
                 {
                     id: 3,
                     name: 'Linkskurve',
                     description: 'Kurve nach links',
-                    icon_url: '↖️',
+                    icon_url: '/static/track-icons/linkskurve.png',
                     is_placeholder: false
                 },
                 {
                     id: 4,
                     name: 'S-Kurve',
                     description: 'Doppelte Kurve',
-                    icon_url: '〰️',
+                    icon_url: '/static/track-icons/s_kurve.png',
                     is_placeholder: false
                 },
                 {
                     id: 5,
                     name: 'Hindernis',
                     description: 'Bahn mit Hindernis',
-                    icon_url: '🚧',
+                    icon_url: '/static/track-icons/hindernis.png',
                     is_placeholder: false
                 },
                 {
                     id: 6,
                     name: 'Loop',
                     description: 'Looping-Bahn',
-                    icon_url: '🔄',
+                    icon_url: '/static/track-icons/loop.png',
                     is_placeholder: false
                 },
                 {
                     id: 7,
                     name: 'Rampe',
                     description: 'Erhöhte Bahn',
-                    icon_url: '📐',
+                    icon_url: '/static/track-icons/rampe.png',
                     is_placeholder: false
                 },
                 {
                     id: 8,
                     name: 'Tunnel',
                     description: 'Tunnel-Passage',
-                    icon_url: '🕳️',
+                    icon_url: '/static/track-icons/tunnel.png',
                     is_placeholder: false
                 }
             ];
@@ -952,17 +953,11 @@
                 const typeCard = document.createElement('div');
                 typeCard.className = `track-type-card ${type.is_placeholder ? 'placeholder' : ''}`;
                 
-                // Check if icon_url is an emoji (single character)
-                const isEmoji = type.icon_url.length <= 2;
-                
                 typeCard.innerHTML = `
                     <div class="track-icon">
-                        ${isEmoji ? 
-                            `<span style="font-size: 1.5em;">${type.icon_url}</span>` :
-                            `<img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
-                                 style="width: 100%; height: 100%; object-fit: contain;"
-                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
-                        }
+                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
                     </div>
                     <div class="track-type-name">${escapeHtml(type.name)}</div>
                     <div class="track-type-desc">${escapeHtml(type.description || '')}</div>
@@ -992,6 +987,7 @@
             console.log('✏️ Editing place:', placeId);
             isEditMode = true;
             currentPlaceId = placeId;
+            currentTrackConfig = []; // Reset track config when editing new place
             
             const place = places.find(p => p.id === placeId);
             if (!place) return;
@@ -1016,22 +1012,25 @@
             const place = places.find(p => p.id === placeId);
             if (!place) return;
 
-            const mockTrackConfig = [];
-            for (let i = 1; i <= place.track_count; i++) {
-                // Cycle through track types for variety
-                const typeIndex = (i - 1) % trackTypes.length;
-                const trackType = trackTypes[typeIndex];
-                
-                mockTrackConfig.push({
-                    track_number: i,
-                    track_type_id: trackType.id,
-                    track_type_name: trackType.name,
-                    track_type_icon: trackType.icon_url
-                });
+            // Create or load existing track configuration
+            if (!currentTrackConfig.length || currentTrackConfig.length !== place.track_count) {
+                currentTrackConfig = [];
+                for (let i = 1; i <= place.track_count; i++) {
+                    // Cycle through track types for variety
+                    const typeIndex = (i - 1) % trackTypes.length;
+                    const trackType = trackTypes[typeIndex];
+                    
+                    currentTrackConfig.push({
+                        track_number: i,
+                        track_type_id: trackType.id,
+                        track_type_name: trackType.name,
+                        track_type_icon: trackType.icon_url
+                    });
+                }
             }
             
-            console.log('✅ Track config loaded (Mock):', mockTrackConfig.length);
-            renderTrackConfiguration(mockTrackConfig);
+            console.log('✅ Track config loaded (Mock):', currentTrackConfig.length);
+            renderTrackConfiguration(currentTrackConfig);
         }
 
         function renderTrackConfiguration(trackConfig) {
@@ -1042,20 +1041,14 @@
                 const trackItem = document.createElement('div');
                 trackItem.className = 'track-list-item';
                 
-                // Check if icon_url is an emoji (single character)
-                const isEmoji = track.track_type_icon.length <= 2;
-                
                 trackItem.innerHTML = `
                     <div class="track-info">
                         <div class="track-number">Bahn ${track.track_number}</div>
                         <div class="track-type-name">${escapeHtml(track.track_type_name)}</div>
                     </div>
                     <div class="track-icon-clickable" onclick="selectTrackType(${track.track_number})" title="Bahn-Typ ändern">
-                        ${isEmoji ? 
-                            `<span style="font-size: 1.3em;">${track.track_type_icon}</span>` :
-                            `<img src="${track.track_type_icon}" alt="${escapeHtml(track.track_type_name)}" 
-                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
-                        }
+                        <img src="${track.track_type_icon}" alt="${escapeHtml(track.track_type_name)}" 
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
                     </div>
                 `;
                 
@@ -1080,17 +1073,11 @@
                 typeItem.style.cursor = 'pointer';
                 typeItem.onclick = () => updateTrackType(type.id);
                 
-                // Check if icon_url is an emoji (single character)
-                const isEmoji = type.icon_url.length <= 2;
-                
                 typeItem.innerHTML = `
                     <div class="track-icon">
-                        ${isEmoji ? 
-                            `<span style="font-size: 1.5em;">${type.icon_url}</span>` :
-                            `<img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
-                                 style="width: 100%; height: 100%; object-fit: contain;"
-                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
-                        }
+                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
                     </div>
                     <div class="track-type-name">${escapeHtml(type.name)}</div>
                 `;
@@ -1106,11 +1093,39 @@
 
             console.log('🔄 Updating track type:', trackTypeId, 'for track:', currentTrackNumber);
 
-            // ALWAYS USE MOCK RESPONSE - No API calls that can fail
-            await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
-            await loadTrackConfiguration(currentPlaceId);
-            closeTrackTypeModal();
-            showMessage('Track-Typ erfolgreich aktualisiert! (Mock)', 'success');
+            try {
+                // Find the new track type
+                const newTrackType = trackTypes.find(type => type.id === trackTypeId);
+                if (!newTrackType) {
+                    throw new Error('Track type not found');
+                }
+
+                // Update the track configuration
+                const trackIndex = currentTrackConfig.findIndex(track => track.track_number === currentTrackNumber);
+                if (trackIndex !== -1) {
+                    currentTrackConfig[trackIndex] = {
+                        track_number: currentTrackNumber,
+                        track_type_id: newTrackType.id,
+                        track_type_name: newTrackType.name,
+                        track_type_icon: newTrackType.icon_url
+                    };
+                }
+
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Re-render the track configuration
+                renderTrackConfiguration(currentTrackConfig);
+                
+                closeTrackTypeModal();
+                showMessage(`Bahn ${currentTrackNumber} erfolgreich auf "${newTrackType.name}" geändert! (Mock)`, 'success');
+                
+                console.log('✅ Track type updated successfully');
+
+            } catch (error) {
+                console.error('❌ Fehler beim Aktualisieren des Track-Typs:', error);
+                showMessage('Fehler beim Aktualisieren: ' + error.message, 'error');
+            }
         }
 
         // ROBUST FORM HANDLING - NO API CALLS THAT CAN FAIL
@@ -1260,6 +1275,8 @@
         // Track count change handler
         document.getElementById('placeTrackCount').addEventListener('change', function() {
             if (isEditMode && currentPlaceId) {
+                // Reset track config when track count changes
+                currentTrackConfig = [];
                 // Re-load track configuration if track count changes
                 setTimeout(() => {
                     loadTrackConfiguration(currentPlaceId);
