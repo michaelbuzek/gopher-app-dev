@@ -16,7 +16,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #f7f3f0 0%, #ede7e0 100%);
+            background: linear-gradient(135deg, #f7f4f1 0%, #ede8e3 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -25,10 +25,10 @@
         }
 
         .container {
-            background: #ffffff;
+            background: #3b5c6c;
             border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             width: 100%;
             max-width: 420px;
             overflow: hidden;
@@ -47,23 +47,12 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            background: #3b5c6c;
             color: white;
             padding: 40px 30px 30px;
             text-align: center;
             position: relative;
             overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
         }
 
         @keyframes rotate {
@@ -114,7 +103,7 @@
         }
 
         .nav {
-            background: #f8fafc;
+            background: #3b5c6c;
             padding: 0;
             display: flex;
             justify-content: center;
@@ -124,7 +113,7 @@
 
         .nav-link {
             text-decoration: none;
-            color: #64748b;
+            color: #cbd5e0;
             font-weight: 600;
             padding: 16px 32px;
             transition: all 0.3s ease;
@@ -137,19 +126,19 @@
         }
 
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #fb923c;
+            background: #3b5c6c;
+            color: #f8c098;
         }
 
         .nav-link.active {
-            background: #ffffff;
-            color: #fb923c;
-            border-bottom-color: #fb923c;
+            background: #3b5c6c;
+            color: #f8c098;
+            border-bottom-color: #f8c098;
         }
 
         .form-container {
             padding: 32px 24px;
-            background: #ffffff;
+            background: #3b5c6c;
         }
 
         .form-group {
@@ -160,7 +149,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #1e293b;
+            color: #f7fafc;
             font-size: 0.95em;
         }
 
@@ -171,35 +160,39 @@
             border-radius: 16px;
             font-size: 16px;
             background: #ffffff;
+            color: #2d3748;
             transition: all 0.3s ease;
             -webkit-appearance: none;
             appearance: none;
-            color: #1e293b;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #fb923c;
-            box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.1);
+            border-color: #f8c098;
+            box-shadow: 0 0 0 4px rgba(248, 192, 152, 0.2);
         }
 
         .form-input:invalid {
-            border-color: #ea7c55;
+            border-color: #fc8181;
+        }
+
+        .form-input::placeholder {
+            color: #a0aec0;
         }
 
         .players-container {
-            background: #f8fafc;
+            background: #2a4a58;
             border-radius: 16px;
             padding: 20px;
             margin-top: 15px;
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed #3b5c6c;
             transition: all 0.3s ease;
         }
 
         .players-container.has-players {
             border-style: solid;
-            border-color: #fb923c;
-            background: #fef3e2;
+            border-color: #f8c098;
+            background: #2a4a58;
         }
 
         .player-input {
@@ -226,8 +219,8 @@
         }
 
         .submit-btn {
-            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
-            color: white;
+            background: linear-gradient(135deg, #f8c098 0%, #f2bc91 100%);
+            color: #2d3748;
             border: none;
             padding: 18px 40px;
             border-radius: 16px;
@@ -259,7 +252,7 @@
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(251, 146, 60, 0.25);
+            box-shadow: 0 12px 24px rgba(248, 192, 152, 0.3);
         }
 
         .submit-btn:active {
@@ -276,6 +269,7 @@
             display: none;
             text-align: center;
             padding: 20px;
+            color: #f7fafc;
         }
 
         .loading.show {
@@ -285,8 +279,8 @@
         .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #f1f5f9;
-            border-top: 3px solid #fb923c;
+            border: 3px solid #3b5c6c;
+            border-top: 3px solid #f8c098;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 15px;
@@ -298,12 +292,12 @@
         }
 
         .error-message {
-            background: #fef6f3;
-            color: #c2543a;
+            background: #2a4a58;
+            color: #fc8181;
             padding: 16px;
             border-radius: 12px;
             margin-bottom: 20px;
-            border: 1px solid #ea7c55;
+            border: 1px solid #fc8181;
             display: none;
             font-size: 0.9em;
         }
@@ -548,9 +542,9 @@
         document.querySelectorAll('.form-input').forEach(input => {
             input.addEventListener('blur', function() {
                 if (this.checkValidity()) {
-                    this.style.borderColor = '#fb923c';
+                    this.style.borderColor = '#f8c098';
                 } else {
-                    this.style.borderColor = '#ea7c55';
+                    this.style.borderColor = '#fc8181';
                 }
             });
         });
