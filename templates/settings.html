@@ -789,6 +789,7 @@
             ]);
         }
 
+        // PERSISTENT MOCK DATA LOADING
         async function loadPlaces() {
             console.log('📍 Loading places...');
             
@@ -796,34 +797,41 @@
             hideElement('placesGrid');
             hideElement('placesEmpty');
 
-            // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+            // ONLY load initial data if places array is empty
+            if (places.length === 0) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+                
+                places = [
+                    {
+                        id: 1,
+                        name: 'Bülach Adventure Golf',
+                        track_count: 18,
+                        is_default: true,
+                        has_custom_config: true
+                    },
+                    {
+                        id: 2,
+                        name: 'Minigolf Zürich',
+                        track_count: 12,
+                        is_default: false,
+                        has_custom_config: false
+                    },
+                    {
+                        id: 3,
+                        name: 'Fun Golf Winterthur', 
+                        track_count: 15,
+                        is_default: false,
+                        has_custom_config: true
+                    }
+                ];
+                
+                console.log('✅ Initial places loaded (Mock):', places.length);
+            } else {
+                // Places already exist - just simulate loading delay
+                await new Promise(resolve => setTimeout(resolve, 200));
+                console.log('✅ Places already loaded, using existing data:', places.length);
+            }
             
-            places = [
-                {
-                    id: 1,
-                    name: 'Bülach Adventure Golf',
-                    track_count: 18,
-                    is_default: true,
-                    has_custom_config: true
-                },
-                {
-                    id: 2,
-                    name: 'Minigolf Zürich',
-                    track_count: 12,
-                    is_default: false,
-                    has_custom_config: false
-                },
-                {
-                    id: 3,
-                    name: 'Fun Golf Winterthur', 
-                    track_count: 15,
-                    is_default: false,
-                    has_custom_config: true
-                }
-            ];
-            
-            console.log('✅ Places loaded (Mock):', places.length);
             renderPlaces();
         }
 
@@ -1165,8 +1173,8 @@
                             ...places[placeIndex],
                             ...formData
                         };
+                        console.log('✅ Place updated (Mock):', places[placeIndex]);
                     }
-                    console.log('✅ Place updated (Mock)');
                 } else {
                     // Add new place to mock data
                     const newPlace = {
@@ -1175,11 +1183,11 @@
                         has_custom_config: false
                     };
                     places.unshift(newPlace);
-                    console.log('✅ Place created (Mock)');
+                    console.log('✅ Place created (Mock):', newPlace);
                 }
                 
                 closePlaceModal();
-                renderPlaces(); // Re-render with updated data
+                renderPlaces(); // Re-render with updated data - DON'T call loadPlaces()!
                 showMessage(
                     (isEditMode ? 'Platz erfolgreich aktualisiert!' : 'Platz erfolgreich erstellt!') + ' (Mock)', 
                     'success'
