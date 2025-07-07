@@ -817,16 +817,16 @@ def get_track_types_temp():
         logger.error(f"❌ Get track types error: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Failed to load track types'}), 500
 
-@app.route('/settings')
-def settings_temp():
-    """Temporary settings page"""
-    try:
-        # Für jetzt einfach die template rendern ohne echte Daten
-        return render_template('settings.html')
-        
-    except Exception as e:
-        logger.error(f"❌ Settings page error: {str(e)}")
-        return f"<h1>Settings</h1><p>Settings page in development. Database models needed first.</p>", 200
+#@app.route('/settings')
+#def settings_temp():
+#    """Temporary settings page"""
+#    try:
+#        # Für jetzt einfach die template rendern ohne echte Daten
+#        return render_template('settings.html')
+#        
+#    except Exception as e:
+#        logger.error(f"❌ Settings page error: {str(e)}")
+#        return f"<h1>Settings</h1><p>Settings page in development. Database models needed first.</p>", 200
 
 # ------------------------------
 # Error Handlers
