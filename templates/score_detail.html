@@ -202,6 +202,10 @@
             opacity: 0.7;
         }
 
+        .score-input:focus::placeholder {
+            opacity: 0;
+        }
+
         .score-input.has-value {
             background: #f8c098;
             color: #2d3748;
@@ -556,7 +560,7 @@
                                 data-player-id="{{ player.id }}" 
                                 data-track="{{ track }}" 
                                 value="{{ score_map.get((player.id, track), '') }}"
-                                placeholder="0"
+                                placeholder=""
                                 min="1"
                                 max="20"
                                 inputmode="numeric"
@@ -646,6 +650,11 @@
         document.querySelectorAll('.score-input').forEach(input => {
             // Focus Event
             input.addEventListener('focus', function() {
+                // iPhone/Mobile Fix: Clear placeholder value
+                if (this.value === '0' || this.value === '') {
+                    this.value = '';
+                }
+                
                 if (!isMobile) {
                     currentInput = this;
                     showNumpadNearInput(this);

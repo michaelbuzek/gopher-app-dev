@@ -125,54 +125,16 @@
         }
 
         .content {
-            padding: 25px 20px;
-            background: #ffffff;
-        }
-
-        .stats-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-card {
-            background: #f8fafc;
             padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .stat-number {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #3b5c6c;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #64748b;
-            font-size: 0.9em;
+            background: #ffffff;
         }
 
         .search-filter {
             background: #f8fafc;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .search-row {
@@ -238,22 +200,23 @@
 
         .game-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid #e2e8f0;
             overflow: hidden;
             transition: all 0.3s ease;
+            margin-bottom: 3px;
         }
 
         .game-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
             border-color: #f8c098;
         }
 
         .game-header {
             background: #f8fafc;
             color: #3b5c6c;
-            padding: 15px 20px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -263,20 +226,57 @@
         .game-id {
             background: #e2e8f0;
             color: #64748b;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
             font-weight: 600;
         }
 
         .game-date {
-            font-size: 1em;
+            font-size: 0.95em;
             font-weight: 600;
             color: #3b5c6c;
         }
 
         .game-body {
-            padding: 20px;
+            padding: 15px;
+        }
+
+        .game-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .game-place {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .game-details {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+
+        .winner-info {
+            background: #fef7ed;
+            border: 1px solid #f8c098;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .winner-info .winner-label {
+            color: #3b5c6c;
+            font-weight: 600;
+        }
+
+        .winner-info .winner-name {
+            color: #f8c098;
+            font-weight: 600;
         }
 
         .game-info {
@@ -600,30 +600,6 @@
         </div>
 
         <div class="content">
-            <!-- Statistiken Übersicht -->
-            <div class="stats-overview">
-                <div class="stat-card">
-                    <div class="stat-icon">🎮</div>
-                    <div class="stat-number" id="totalGames">{{ games|length }}</div>
-                    <div class="stat-label">Gespielte Spiele</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-number" id="totalPlayers">-</div>
-                    <div class="stat-label">Verschiedene Spieler</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⛳</div>
-                    <div class="stat-number" id="totalTracks">-</div>
-                    <div class="stat-label">Gespielte Bahnen</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📍</div>
-                    <div class="stat-number" id="totalPlaces">-</div>
-                    <div class="stat-label">Besuchte Plätze</div>
-                </div>
-            </div>
-
             <!-- Suche und Filter -->
             <div class="search-filter">
                 <div class="search-row">
@@ -643,28 +619,29 @@
                             <div class="game-date">{{ game.date }}</div>
                         </div>
                         <div class="game-body">
-                            <div class="game-info">
-                                <div class="info-item">
-                                    <div class="info-icon">📍</div>
-                                    <div class="info-value">{{ game.place }}</div>
-                                    <div class="info-label">Platz</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-icon">⛳</div>
-                                    <div class="info-value">{{ game.track_count }}</div>
-                                    <div class="info-label">Bahnen</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-icon">👥</div>
-                                    <div class="info-value">{{ game.players|length }}</div>
-                                    <div class="info-label">Spieler</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-icon">📅</div>
-                                    <div class="info-value">{{ game.created_at.strftime('%H:%M') if game.created_at else 'N/A' }}</div>
-                                    <div class="info-label">Uhrzeit</div>
-                                </div>
+                            <div class="game-summary">
+                                <div class="game-place">📍 {{ game.place }}</div>
+                                <div class="game-details">⛳ {{ game.track_count }} Bahnen • 👥 {{ game.players|length }} Spieler</div>
                             </div>
+
+                            {% if game.players %}
+                                {% set ns = namespace(winner=None, min_score=999) %}
+                                {% for player in game.players %}
+                                    {% set total = player.get_total_score() %}
+                                    {% if total > 0 and total < ns.min_score %}
+                                        {% set ns.min_score = total %}
+                                        {% set ns.winner = player.name %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if ns.winner %}
+                                <div class="winner-info">
+                                    <span class="winner-label">🏆 Gewinner:</span> 
+                                    <span class="winner-name">{{ ns.winner }}</span> 
+                                    <span style="color: #64748b;">({{ ns.min_score }} Schläge)</span>
+                                </div>
+                                {% endif %}
+                            {% endif %}
 
                             <div class="players-section">
                                 <div class="players-title">🏌️ Spieler:</div>
@@ -734,27 +711,6 @@
       } catch (e) {
           console.error('Fehler beim Laden der Spiele:', e);
           games = [];
-      }
-
-      // Statistiken berechnen
-      function calculateStats() {
-          if (!games || games.length === 0) return;
-
-          const uniquePlayers = new Set();
-          const uniquePlaces = new Set();
-          let totalTracks = 0;
-
-          games.forEach(game => {
-              game.players.forEach(player => {
-                  uniquePlayers.add(player.name);
-              });
-              uniquePlaces.add(game.place);
-              totalTracks += game.track_count;
-          });
-
-          document.getElementById('totalPlayers').textContent = uniquePlayers.size;
-          document.getElementById('totalPlaces').textContent = uniquePlaces.size;
-          document.getElementById('totalTracks').textContent = totalTracks;
       }
 
       // Suche funktionalität
@@ -851,7 +807,6 @@
                           
                           // Statistiken aktualisieren
                           games = games.filter(g => g.id !== currentGameId);
-                          calculateStats();
                           
                           // Prüfen ob keine Spiele mehr da sind
                           if (games.length === 0) {
@@ -905,7 +860,7 @@
 
       // Initial Setup
       document.addEventListener('DOMContentLoaded', function() {
-          calculateStats();
+          console.log('History page loaded');
       });
   </script>
 </body>
