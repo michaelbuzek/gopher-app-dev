@@ -562,7 +562,7 @@
         const gameData = {
             id: 1,
             place: 'soga',
-            place_id: 1,
+            place_id: null, // Wird automatisch ermittelt
             date: '2025-07-07',
             track_count: 3,
             players: [
@@ -570,6 +570,14 @@
                 { id: 2, name: 'sdfvsdfv', scores: { 1: 2, 2: 2, 3: 5 } }
             ]
         };
+
+        // Places data - gleiche wie in Settings
+        const places = [
+            { id: 1, name: 'Bülach Adventure Golf', track_count: 18, is_default: true },
+            { id: 2, name: 'Minigolf Zürich', track_count: 12, is_default: false },
+            { id: 3, name: 'Fun Golf Winterthur', track_count: 15, is_default: false },
+            { id: 4, name: 'soga', track_count: 3, is_default: false } // NEW: soga place
+        ];
 
         // Track types - gleiche wie in Settings
         const trackTypes = [
@@ -583,11 +591,60 @@
             { id: 8, name: 'Tunnel', icon_url: '/static/track-icons/tunnel.png' }
         ];
 
+        // Find place by name
+        function findPlaceByName(placeName) {
+            // Try exact match first
+            let place = places.find(p => p.name.toLowerCase() === placeName.toLowerCase());
+            
+            // Try partial match
+            if (!place) {
+                place = places.find(p => 
+                    p.name.toLowerCase().includes(placeName.toLowerCase()) ||
+                    placeName.toLowerCase().includes(p.name.toLowerCase())
+                );
+            }
+            
+            // Try name parts
+            if (!place) {
+                const searchWords = placeName.toLowerCase().split(/\s+/);
+                place = places.find(p => {
+                    const placeWords = p.name.toLowerCase().split(/\s+/);
+                    return searchWords.some(word => placeWords.some(pWord => pWord.includes(word)));
+                });
+            }
+            
+            return place;
+        }
+
         // Generate track configuration for place
         function getTrackConfigForPlace(placeId, trackCount) {
+            console.log(`🎯 Getting track config for place ${placeId}, ${trackCount} tracks`);
+            
             const trackConfig = [];
             for (let i = 1; i <= trackCount; i++) {
-                const typeIndex = (i - 1) % trackTypes.length;
+                // Different track configurations based on place_id
+                let typeIndex;
+                
+                if (placeId === 4) {
+                    // soga - special configuration
+                    const sogaPattern = [0, 4, 2]; // Gerade, Hindernis, Linkskurve
+                    typeIndex = sogaPattern[(i - 1) % sogaPattern.length];
+                } else if (placeId === 1) {
+                    // Bülach - varied configuration
+                    typeIndex = (i - 1) % trackTypes.length;
+                } else if (placeId === 2) {
+                    // Zürich - curve-heavy
+                    const zurichPattern = [1, 2, 3, 0]; // Rechts, Links, S-Kurve, Gerade
+                    typeIndex = zurichPattern[(i - 1) % zurichPattern.length];
+                } else if (placeId === 3) {
+                    // Winterthur - obstacle course
+                    const winterthurPattern = [0, 4, 5, 6]; // Gerade, Hindernis, Loop, Rampe
+                    typeIndex = winterthurPattern[(i - 1) % winterthurPattern.length];
+                } else {
+                    // Default/Unknown place
+                    typeIndex = (i - 1) % trackTypes.length;
+                }
+                
                 const trackType = trackTypes[typeIndex];
                 
                 trackConfig.push({
@@ -597,6 +654,10 @@
                     track_type_icon: trackType.icon_url
                 });
             }
+            
+            console.log(`✅ Generated ${trackConfig.length} track configs for place ${placeId}:`, 
+                       trackConfig.map(t => `${t.track_number}:${t.track_type_name}`));
+            
             return trackConfig;
         }
 
@@ -807,6 +868,15 @@
         function initializePage() {
             console.log('🚀 Results page loaded');
             
+            // Find place by name and set place_id
+            const place = findPlaceByName(gameData.place);
+            if (place) {
+                gameData.place_id = place.id;
+                console.log(`✅ Found place: "${gameData.place}" -> ID ${place.id} (${place.name})`);
+            } else {
+                console.log(`⚠️ Place not found: "${gameData.place}" - using default config`);
+            }
+            
             // Update game info
             document.getElementById('gamePlace').textContent = gameData.place;
             document.getElementById('gameDate').textContent = gameData.date;
@@ -817,6 +887,7 @@
             
             // Get track configuration for this place
             const trackConfig = getTrackConfigForPlace(gameData.place_id, gameData.track_count);
+            console.log('🎯 Track config:', trackConfig);
             
             // Calculate and render results
             const results = calculateResults();
