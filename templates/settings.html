@@ -438,59 +438,72 @@
             margin-top: 20px;
         }
 
-        .track-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-            gap: 10px;
+        .track-list {
             margin-top: 15px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-            padding: 10px;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: #f8fafc;
         }
 
-        .track-item {
+        .track-list-item {
             background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             transition: all 0.3s ease;
         }
 
-        .track-item:hover {
-            border-color: #f8c098;
-            transform: scale(1.02);
+        .track-list-item:last-child {
+            border-bottom: none;
         }
 
-        .track-item.active {
-            border-color: #f8c098;
-            background: #fef7ed;
+        .track-list-item:hover {
+            background: #f8fafc;
+        }
+
+        .track-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .track-number {
-            font-size: 0.8em;
+            font-size: 1.1em;
             font-weight: 600;
-            color: #64748b;
-            margin-bottom: 6px;
+            color: #3b5c6c;
+            min-width: 80px;
         }
 
-        .track-icon-small {
-            width: 35px;
-            height: 35px;
-            margin: 0 auto;
+        .track-type-name {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .track-icon-clickable {
+            width: 45px;
+            height: 45px;
             background: #f1f5f9;
-            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.3em;
         }
 
-        .track-icon-small img {
+        .track-icon-clickable:hover {
+            border-color: #f8c098;
+            background: #fef7ed;
+            transform: scale(1.05);
+        }
+
+        .track-icon-clickable img {
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -564,9 +577,22 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .track-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
+            .track-list-item {
+                padding: 12px 15px;
+            }
+
+            .track-info {
+                gap: 10px;
+            }
+
+            .track-number {
+                min-width: 60px;
+                font-size: 1em;
+            }
+
+            .track-icon-clickable {
+                width: 40px;
+                height: 40px;
             }
 
             .modal {
@@ -713,10 +739,10 @@
                 <div class="track-editor" id="trackEditor" style="display: none;">
                     <label class="form-label">🎯 Bahn-Konfiguration</label>
                     <p style="color: #64748b; font-size: 0.9em; margin-bottom: 10px;">
-                        Klicke auf eine Bahn um den Typ zu ändern
+                        Klicke auf das Icon um den Bahn-Typ zu ändern
                     </p>
-                    <div class="track-grid" id="trackGrid">
-                        <!-- Track configuration wird hier angezeigt -->
+                    <div class="track-list" id="trackList">
+                        <!-- Track configuration wird hier als Liste angezeigt -->
                     </div>
                 </div>
 
@@ -814,56 +840,56 @@
                     id: 1,
                     name: 'Gerade Bahn',
                     description: 'Einfache gerade Strecke',
-                    icon_url: '/static/track-icons/gerade.png',
+                    icon_url: '🏌️',
                     is_placeholder: false
                 },
                 {
                     id: 2,
                     name: 'Rechtskurve',
                     description: 'Kurve nach rechts',
-                    icon_url: '/static/track-icons/rechts.png',
+                    icon_url: '↗️',
                     is_placeholder: false
                 },
                 {
                     id: 3,
                     name: 'Linkskurve',
                     description: 'Kurve nach links',
-                    icon_url: '/static/track-icons/links.png',
+                    icon_url: '↖️',
                     is_placeholder: false
                 },
                 {
                     id: 4,
                     name: 'S-Kurve',
                     description: 'Doppelte Kurve',
-                    icon_url: '/static/track-icons/s_kurve.png',
+                    icon_url: '〰️',
                     is_placeholder: false
                 },
                 {
                     id: 5,
                     name: 'Hindernis',
                     description: 'Bahn mit Hindernis',
-                    icon_url: '/static/track-icons/hindernis.png',
+                    icon_url: '🚧',
                     is_placeholder: false
                 },
                 {
                     id: 6,
                     name: 'Loop',
                     description: 'Looping-Bahn',
-                    icon_url: '/static/track-icons/loop.png',
+                    icon_url: '🔄',
                     is_placeholder: false
                 },
                 {
                     id: 7,
                     name: 'Rampe',
                     description: 'Erhöhte Bahn',
-                    icon_url: '/static/track-icons/rampe.png',
+                    icon_url: '📐',
                     is_placeholder: false
                 },
                 {
                     id: 8,
                     name: 'Tunnel',
                     description: 'Tunnel-Passage',
-                    icon_url: '/static/track-icons/tunnel.png',
+                    icon_url: '🕳️',
                     is_placeholder: false
                 }
             ];
@@ -926,11 +952,17 @@
                 const typeCard = document.createElement('div');
                 typeCard.className = `track-type-card ${type.is_placeholder ? 'placeholder' : ''}`;
                 
+                // Check if icon_url is an emoji (single character)
+                const isEmoji = type.icon_url.length <= 2;
+                
                 typeCard.innerHTML = `
                     <div class="track-icon">
-                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
-                             style="width: 100%; height: 100%; object-fit: contain;"
-                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                        ${isEmoji ? 
+                            `<span style="font-size: 1.5em;">${type.icon_url}</span>` :
+                            `<img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                                 style="width: 100%; height: 100%; object-fit: contain;"
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
+                        }
                     </div>
                     <div class="track-type-name">${escapeHtml(type.name)}</div>
                     <div class="track-type-desc">${escapeHtml(type.description || '')}</div>
@@ -1003,26 +1035,34 @@
         }
 
         function renderTrackConfiguration(trackConfig) {
-            const grid = document.getElementById('trackGrid');
-            grid.innerHTML = '';
+            const list = document.getElementById('trackList');
+            list.innerHTML = '';
 
             trackConfig.forEach(track => {
                 const trackItem = document.createElement('div');
-                trackItem.className = 'track-item';
-                trackItem.onclick = () => selectTrackType(track.track_number);
+                trackItem.className = 'track-list-item';
+                
+                // Check if icon_url is an emoji (single character)
+                const isEmoji = track.track_type_icon.length <= 2;
                 
                 trackItem.innerHTML = `
-                    <div class="track-number">Bahn ${track.track_number}</div>
-                    <div class="track-icon-small">
-                        <img src="${track.track_type_icon}" alt="${escapeHtml(track.track_type_name)}" 
-                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    <div class="track-info">
+                        <div class="track-number">Bahn ${track.track_number}</div>
+                        <div class="track-type-name">${escapeHtml(track.track_type_name)}</div>
+                    </div>
+                    <div class="track-icon-clickable" onclick="selectTrackType(${track.track_number})" title="Bahn-Typ ändern">
+                        ${isEmoji ? 
+                            `<span style="font-size: 1.3em;">${track.track_type_icon}</span>` :
+                            `<img src="${track.track_type_icon}" alt="${escapeHtml(track.track_type_name)}" 
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
+                        }
                     </div>
                 `;
                 
-                grid.appendChild(trackItem);
+                list.appendChild(trackItem);
             });
             
-            console.log('✅ Track config rendered:', trackConfig.length);
+            console.log('✅ Track config rendered as list:', trackConfig.length);
         }
 
         function selectTrackType(trackNumber) {
@@ -1040,11 +1080,17 @@
                 typeItem.style.cursor = 'pointer';
                 typeItem.onclick = () => updateTrackType(type.id);
                 
+                // Check if icon_url is an emoji (single character)
+                const isEmoji = type.icon_url.length <= 2;
+                
                 typeItem.innerHTML = `
                     <div class="track-icon">
-                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
-                             style="width: 100%; height: 100%; object-fit: contain;"
-                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                        ${isEmoji ? 
+                            `<span style="font-size: 1.5em;">${type.icon_url}</span>` :
+                            `<img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                                 style="width: 100%; height: 100%; object-fit: contain;"
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`
+                        }
                     </div>
                     <div class="track-type-name">${escapeHtml(type.name)}</div>
                 `;
