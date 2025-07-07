@@ -661,34 +661,6 @@
                 }
             });
 
-            // Blur Event (wenn Eingabe verlassen wird)
-            input.addEventListener('blur', function() {
-                // iOS Safari Zoom Fix: Zurück zur normalen Ansicht
-                if (isMobile) {
-                    setTimeout(() => {
-                        // Viewport temporär zurücksetzen um Zoom zu korrigieren
-                        const viewport = document.querySelector('meta[name=viewport]');
-                        const originalContent = viewport.content;
-                        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                        
-                        // Nach kurzer Zeit wieder normal setzen
-                        setTimeout(() => {
-                            viewport.content = originalContent;
-                        }, 100);
-                        
-                        // Zusätzlich: Scroll zur aktuellen Position (anti-zoom)
-                        window.scrollTo(window.scrollX, window.scrollY);
-                    }, 100);
-                }
-                
-                // Normale blur Logik
-                setTimeout(() => {
-                    if (!numpadVisible) {
-                        closeNumpad();
-                    }
-                }, 150);
-            });
-
             // Input Event
             input.addEventListener('input', function() {
                 const value = parseInt(this.value) || 0;
@@ -709,13 +681,22 @@
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     saveScore(this);
-                    this.blur(); // Das triggert auch den iOS fix
+                    this.blur();
                     closeNumpad();
                 }
                 if (e.key === 'Escape') {
-                    this.blur(); // Das triggert auch den iOS fix
+                    this.blur();
                     closeNumpad();
                 }
+            });
+
+            // Blur Event
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    if (!numpadVisible) {
+                        closeNumpad();
+                    }
+                }, 150);
             });
         });
 
@@ -905,30 +886,6 @@
             });
 
             updateTotalsDisplay();
-        }
-
-        // iOS Safari Zoom Fix - jetzt korrekt im Script-Tag
-        if (isMobile) {
-            // Event für Tastatur schließen (Viewport ändert sich)
-            window.addEventListener('resize', function() {
-                // Kleine Verzögerung dann Zoom zurücksetzen
-                setTimeout(() => {
-                    if (document.activeElement.tagName !== 'INPUT') {
-                        // Nur wenn kein Input mehr aktiv ist
-                        window.scrollTo(0, window.scrollY);
-                        
-                        // Viewport reset als Backup
-                        const viewport = document.querySelector('meta[name=viewport]');
-                        if (viewport) {
-                            const content = viewport.content;
-                            viewport.content = 'width=device-width, initial-scale=1.0';
-                            setTimeout(() => {
-                                viewport.content = content;
-                            }, 50);
-                        }
-                    }
-                }, 300);
-            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
