@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>🏆 Spiel Ergebnisse</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>⚙️ Settings - Gopher Minigolf</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +21,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             background: #ffffff;
             min-height: 100vh;
@@ -80,34 +81,9 @@
             font-weight: 600;
         }
 
-        .game-info {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 12px;
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
-            flex-wrap: nowrap;
-            min-width: 0;
-        }
-
-        .game-info > div {
-            flex: 1;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-width: 0;
-        }
-
-        .game-info > div:first-child {
-            text-align: left;
-        }
-
-        .game-info > div:last-child {
-            text-align: right;
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
         }
 
         .nav {
@@ -148,315 +124,480 @@
             border-bottom-color: #f8c098;
         }
 
-        .results-container {
-            padding: 25px 20px;
+        .content {
+            padding: 20px;
             background: #ffffff;
         }
 
-        .winner-section {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .winner-card {
-            background: #f8c098;
-            color: #2d3748;
-            padding: 20px;
+        .section {
+            background: #f8fafc;
             border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(248, 192, 152, 0.25);
-            position: relative;
-            overflow: hidden;
-            animation: bounce 0.6s ease-out;
-            border: 2px solid #f2bc91;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .winner-card.tie {
-            background: #fbbf24;
-            border-color: #f59e0b;
-            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
-        }
-
-        @keyframes bounce {
-            0%, 20%, 60%, 100% { transform: scale(1); }
-            40% { transform: scale(1.02); }
-            80% { transform: scale(1.01); }
-        }
-
-        .winner-card::before {
-            content: '👑';
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 2.5em;
-            opacity: 0.3;
-        }
-
-        .winner-card.tie::before {
-            content: '🤝';
-        }
-
-        .winner-title {
-            font-size: 1.3em;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .winner-name {
-            font-size: 1.8em;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .winner-score {
-            font-size: 1.1em;
-            opacity: 0.8;
-        }
-
-        .all-results {
-            margin-top: 30px;
-        }
-
-        .results-title {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            text-align: center;
-            color: #3b5c6c;
-            font-weight: 600;
-        }
-
-        .results-grid {
-            display: grid;
-            gap: 15px;
-        }
-
-        .result-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
             border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #3b5c6c;
+            color: white;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .result-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .result-card.first, .result-card.tie {
+        .section-body {
+            padding: 20px;
+        }
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .place-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .place-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #f8c098;
+        }
+
+        .place-card.default {
             border: 2px solid #f8c098;
             background: #fef7ed;
         }
 
-        .result-card.second {
-            border: 2px solid #cbd5e1;
-            background: #f8fafc;
+        .place-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
-        .result-card.third {
-            border: 2px solid #d6937b;
-            background: #fef7ed;
-        }
-
-        .result-position {
-            font-size: 1.8em;
-            font-weight: bold;
-            margin-right: 15px;
-            min-width: 50px;
-        }
-
-        .result-info {
-            flex: 1;
-        }
-
-        .result-name {
-            font-size: 1.2em;
+        .place-name {
+            font-size: 1.1em;
             font-weight: 600;
-            margin-bottom: 4px;
             color: #3b5c6c;
         }
 
-        .result-details {
+        .default-badge {
+            background: #f8c098;
+            color: #2d3748;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .place-info {
             color: #64748b;
-            font-size: 0.85em;
-        }
-
-        .result-score {
-            font-size: 2em;
-            font-weight: bold;
-            color: #3b5c6c;
-            text-align: center;
-        }
-
-        .result-card.first .result-score,
-        .result-card.tie .result-score {
-            color: #f8c098;
-        }
-
-        .detailed-scores {
-            margin-top: 30px;
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .scores-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-        }
-
-        .scores-table th {
-            background: #f8fafc;
-            color: #3b5c6c;
-            padding: 12px;
-            text-align: center;
-            font-weight: 600;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .scores-table td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .scores-table tr:hover {
-            background: rgba(248, 192, 152, 0.05);
-        }
-
-        /* Track Icon Styles in Table */
-        .track-cell {
-            background: #fef7ed;
-            font-weight: 600;
-            color: #f8c098;
-            border-right: 2px solid #f8c098;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-width: 80px;
-        }
-
-        .track-icon-table {
-            width: 24px;
-            height: 24px;
-            background: #f1f5f9;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 0.9em;
-        }
-
-        .track-icon-table img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 2px;
-        }
-
-        .track-number {
-            font-size: 0.9em;
-            font-weight: 600;
-            color: #3b5c6c;
-        }
-
-        .action-buttons {
+            margin-bottom: 15px;
             display: flex;
             gap: 15px;
-            margin-top: 30px;
+            flex-wrap: wrap;
         }
 
-        .action-btn {
-            flex: 1;
-            padding: 15px 25px;
+        .place-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .place-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 12px;
             border: none;
-            border-radius: 10px;
-            font-size: 1em;
+            border-radius: 6px;
+            font-size: 0.85em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            text-align: center;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 4px;
         }
 
         .btn-primary {
-            background: #f8fafc;
-            color: #3b5c6c;
-            border: 2px solid #e2e8f0;
+            background: #f8c098;
+            color: #2d3748;
         }
 
         .btn-primary:hover {
-            background: #e2e8f0;
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: #f8c098;
-            color: #2d3748;
-            border: 2px solid #f2bc91;
-        }
-
-        .btn-success:hover {
             background: #f2bc91;
             transform: translateY(-1px);
         }
 
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .add-place-btn {
+            background: #f8c098;
+            color: #2d3748;
+            border: 2px solid #f2bc91;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-place-btn:hover {
+            background: #f2bc91;
+            transform: translateY(-1px);
+        }
+
+        /* Track Types Section */
+        .track-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .track-type-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .track-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .track-type-card.placeholder {
+            border: 2px dashed #cbd5e1;
+            opacity: 0.7;
+        }
+
+        .track-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .track-type-name {
+            font-weight: 600;
+            color: #3b5c6c;
+            margin-bottom: 5px;
+        }
+
+        .track-type-desc {
+            color: #64748b;
+            font-size: 0.8em;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #64748b;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #f8c098;
+            box-shadow: 0 0 0 3px rgba(248, 192, 152, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* Track Editor Styles */
+        .track-editor {
+            margin-top: 20px;
+        }
+
+        .track-list {
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .track-list-item {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .track-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .track-list-item:hover {
+            background: #f8fafc;
+        }
+
+        .track-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .track-number {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #3b5c6c;
+            min-width: 80px;
+        }
+
+        .track-type-name {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .track-icon-clickable {
+            width: 45px;
+            height: 45px;
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.3em;
+        }
+
+        .track-icon-clickable:hover {
+            border-color: #f8c098;
+            background: #fef7ed;
+            transform: scale(1.05);
+        }
+
+        .track-icon-clickable img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        /* Loading and Empty States */
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #f8c098;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        /* Success/Error Messages */
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
         /* Mobile Optimierung */
         @media (max-width: 768px) {
-            .results-container {
+            .content {
                 padding: 15px;
             }
 
-            .winner-card {
-                padding: 18px 15px;
+            .places-grid {
+                grid-template-columns: 1fr;
             }
 
-            .winner-name {
-                font-size: 1.5em;
+            .track-types-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .winner-title {
-                font-size: 1.2em;
+            .track-list-item {
+                padding: 12px 15px;
             }
 
-            .game-info {
-                flex-direction: row;
-                gap: 5px;
-                text-align: center;
-                font-size: 0.75em;
-                padding: 8px;
+            .track-info {
+                gap: 10px;
             }
 
-            .game-info > div {
-                font-size: 0.85em;
+            .track-number {
+                min-width: 60px;
+                font-size: 1em;
             }
 
-            .result-card {
-                flex-direction: column;
-                text-align: center;
-                gap: 12px;
+            .track-icon-clickable {
+                width: 40px;
+                height: 40px;
             }
 
-            .result-position {
-                margin-right: 0;
-            }
-
-            .action-buttons {
-                flex-direction: column;
+            .modal {
+                padding: 20px;
+                margin: 20px;
             }
 
             .nav {
@@ -465,21 +606,6 @@
 
             .nav-link {
                 padding: 10px 15px;
-            }
-
-            .scores-table {
-                font-size: 0.85em;
-            }
-
-            .track-cell {
-                flex-direction: column;
-                gap: 4px;
-                padding: 8px 4px;
-            }
-
-            .track-icon-table {
-                width: 20px;
-                height: 20px;
             }
 
             .gopher-logo {
@@ -496,6 +622,16 @@
             .header h1 {
                 font-size: 1.5em;
             }
+
+            .place-actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .btn {
+                font-size: 0.8em;
+                padding: 6px 10px;
+            }
         }
     </style>
 </head>
@@ -505,330 +641,654 @@
             <!-- Gopher Logo - Home Link -->
             <a href="/" class="gopher-logo" title="Zurück zur Startseite">
                 <img src="/static/gopher_main.png" 
-                     alt="🐹 Gopher Home" 
+                     alt="🐿️ Gopher Home" 
                      onerror="this.style.display='none'; this.parentNode.querySelector('.gopher-fallback').style.display='block';">
-                <div class="gopher-fallback">🐹</div>
+                <div class="gopher-fallback">🐿️</div>
             </a>
-
-            <h1>🏆 Spiel Ergebnisse</h1>
-            <div class="game-info">
-                <div>📍 <strong id="gamePlace">soga</strong></div>
-                <div>📅 <strong id="gameDate">2025-07-07</strong></div>
-                <div>⛳ <strong id="gameTrackCount">3 Bahnen</strong></div>
-            </div>
+            
+            <h1>⚙️ Einstellungen</h1>
+            <p>Minigolf-Plätze und Bahn-Typen verwalten</p>
         </div>
 
         <div class="nav">
             <a href="/" class="nav-link">🏠 Home</a>
-            <a href="#" class="nav-link">📝 Score bearbeiten</a>
             <a href="/history" class="nav-link">📜 History</a>
+            <a href="/settings" class="nav-link active">⚙️ Settings</a>
         </div>
 
-        <div class="results-container">
-            <div class="winner-section" id="winnerSection">
-                <!-- Winner wird hier dynamisch eingefügt -->
-            </div>
+        <div class="content">
+            <!-- Message Area -->
+            <div id="messageArea"></div>
 
-            <div class="all-results">
-                <h2 class="results-title">📊 Endergebnis</h2>
-                <div class="results-grid" id="resultsGrid">
-                    <!-- Results werden hier dynamisch eingefügt -->
+            <!-- Places Management Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        📍 Minigolf-Plätze
+                    </div>
+                    <button class="add-place-btn" onclick="openAddPlaceModal()">
+                        ➕ Neuer Platz
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="loading-state" id="placesLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Lade Plätze...</p>
+                    </div>
+                    <div class="places-grid" id="placesGrid" style="display: none;">
+                        <!-- Places werden hier dynamisch geladen -->
+                    </div>
+                    <div class="empty-state" id="placesEmpty" style="display: none;">
+                        <div class="empty-icon">📍</div>
+                        <h3>Noch keine Plätze</h3>
+                        <p>Erstelle deinen ersten Minigolf-Platz!</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="detailed-scores" id="detailedScores" style="display: none;">
-                <h3 style="margin-bottom: 15px; text-align: center; color: #3b5c6c; font-weight: 600;">📋 Detaillierte Scores</h3>
-                <table class="scores-table" id="scoresTable">
-                    <!-- Table wird hier dynamisch erstellt -->
-                </table>
+            <!-- Track Types Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        🎯 Bahn-Typen Bibliothek
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="color: #64748b; margin-bottom: 15px;">
+                        Diese Icon-Bibliothek wird für alle Minigolf-Plätze verwendet.
+                    </p>
+                    <div class="loading-state" id="typesLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Lade Track-Typen...</p>
+                    </div>
+                    <div class="track-types-grid" id="trackTypesGrid" style="display: none;">
+                        <!-- Track Types werden hier dynamisch geladen -->
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="action-buttons">
-                <a href="/" class="action-btn btn-success">
-                    🏠 Neues Spiel
-                </a>
-                <a href="#" class="action-btn btn-primary" id="editScoreBtn">
-                    📝 Score bearbeiten
-                </a>
-                <a href="/history" class="action-btn btn-primary">
-                    📜 Alle Spiele
-                </a>
+    <!-- Add/Edit Place Modal -->
+    <div class="modal-overlay" id="placeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="placeModalTitle">Neuer Minigolf-Platz</h3>
+                <button class="modal-close" onclick="closePlaceModal()">&times;</button>
+            </div>
+            
+            <form id="placeForm">
+                <div class="form-group">
+                    <label class="form-label">📍 Platz Name</label>
+                    <input type="text" class="form-input" id="placeName" required placeholder="z.B. Adventure Golf Bern">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⛳ Anzahl Bahnen</label>
+                    <input type="number" class="form-input" id="placeTrackCount" required min="1" max="50" value="18">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="isDefaultPlace" style="margin-right: 8px;">
+                        Als Standard-Platz markieren
+                    </label>
+                </div>
+
+                <!-- Track Configuration Editor -->
+                <div class="track-editor" id="trackEditor" style="display: none;">
+                    <label class="form-label">🎯 Bahn-Konfiguration</label>
+                    <p style="color: #64748b; font-size: 0.9em; margin-bottom: 10px;">
+                        Klicke auf das Icon um den Bahn-Typ zu ändern
+                    </p>
+                    <div class="track-list" id="trackList">
+                        <!-- Track configuration wird hier als Liste angezeigt -->
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePlaceModal()">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="savePlaceBtn">
+                        💾 Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Track Type Selection Modal -->
+    <div class="modal-overlay" id="trackTypeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="trackTypeModalTitle">Bahn-Typ auswählen</h3>
+                <button class="modal-close" onclick="closeTrackTypeModal()">&times;</button>
+            </div>
+            
+            <div class="track-types-grid" id="trackTypeSelector">
+                <!-- Track type selector wird hier angezeigt -->
             </div>
         </div>
     </div>
 
     <script>
-        // Mock data for demonstration - würde normalerweise vom Backend kommen
-        const gameData = {
-            id: 1,
-            place: 'soga',
-            place_id: 1,
-            date: '2025-07-07',
-            track_count: 3,
-            players: [
-                { id: 1, name: 'weev', scores: { 1: 2, 2: 2, 3: 2 } },
-                { id: 2, name: 'sdfvsdfv', scores: { 1: 2, 2: 2, 3: 5 } }
-            ]
-        };
+        let places = [];
+        let trackTypes = [];
+        let currentPlaceId = null;
+        let currentTrackNumber = null;
+        let isEditMode = false;
+        let currentTrackConfig = []; // Store current track configuration
 
-        // Track types - gleiche wie in Settings
-        const trackTypes = [
-            { id: 1, name: 'Gerade Bahn', icon_url: '/static/track-icons/gerade.png' },
-            { id: 2, name: 'Rechtskurve', icon_url: '/static/track-icons/rechtskurve.png' },
-            { id: 3, name: 'Linkskurve', icon_url: '/static/track-icons/linkskurve.png' },
-            { id: 4, name: 'S-Kurve', icon_url: '/static/track-icons/s_kurve.png' },
-            { id: 5, name: 'Hindernis', icon_url: '/static/track-icons/hindernis.png' },
-            { id: 6, name: 'Loop', icon_url: '/static/track-icons/loop.png' },
-            { id: 7, name: 'Rampe', icon_url: '/static/track-icons/rampe.png' },
-            { id: 8, name: 'Tunnel', icon_url: '/static/track-icons/tunnel.png' }
-        ];
-
-        // Generate track configuration for place
-        function getTrackConfigForPlace(placeId, trackCount) {
-            const trackConfig = [];
-            for (let i = 1; i <= trackCount; i++) {
-                const typeIndex = (i - 1) % trackTypes.length;
-                const trackType = trackTypes[typeIndex];
-                
-                trackConfig.push({
-                    track_number: i,
-                    track_type_id: trackType.id,
-                    track_type_name: trackType.name,
-                    track_type_icon: trackType.icon_url
-                });
-            }
-            return trackConfig;
+        // ROBUST MOCK-FIRST DATA LOADING
+        async function loadData() {
+            console.log('🚀 Loading settings data...');
+            await Promise.all([
+                loadPlaces(),
+                loadTrackTypes()
+            ]);
         }
 
-        // Calculate player totals and positions
-        function calculateResults() {
-            const results = gameData.players.map(player => {
-                let total = 0;
-                for (let track = 1; track <= gameData.track_count; track++) {
-                    total += player.scores[track] || 0;
+        async function loadPlaces() {
+            console.log('📍 Loading places...');
+            
+            showElement('placesLoading');
+            hideElement('placesGrid');
+            hideElement('placesEmpty');
+
+            // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+            
+            places = [
+                {
+                    id: 1,
+                    name: 'Bülach Adventure Golf',
+                    track_count: 18,
+                    is_default: true,
+                    has_custom_config: true
+                },
+                {
+                    id: 2,
+                    name: 'Minigolf Zürich',
+                    track_count: 12,
+                    is_default: false,
+                    has_custom_config: false
+                },
+                {
+                    id: 3,
+                    name: 'Fun Golf Winterthur', 
+                    track_count: 15,
+                    is_default: false,
+                    has_custom_config: true
                 }
-                return {
-                    ...player,
-                    total: total
-                };
-            });
-
-            // Sort by score (lowest first)
-            results.sort((a, b) => {
-                if (a.total === 0 && b.total === 0) return 0;
-                if (a.total === 0) return 1;
-                if (b.total === 0) return -1;
-                return a.total - b.total;
-            });
-
-            // Mark winners and ties
-            if (results.length > 0 && results[0].total > 0) {
-                const winningScore = results[0].total;
-                results.forEach(result => {
-                    if (result.total === winningScore) {
-                        result.is_winner = true;
-                        result.is_tie = results.filter(r => r.total === winningScore).length > 1;
-                    }
-                });
-            }
-
-            return results;
+            ];
+            
+            console.log('✅ Places loaded (Mock):', places.length);
+            renderPlaces();
         }
 
-        // Render winner section
-        function renderWinnerSection(results) {
-            const winnerSection = document.getElementById('winnerSection');
-            const winners = results.filter(r => r.is_winner);
+        async function loadTrackTypes() {
+            console.log('🎯 Loading track types...');
+            
+            showElement('typesLoading');
+            hideElement('trackTypesGrid');
 
-            if (winners.length === 0 || winners[0].total === 0) {
-                winnerSection.style.display = 'none';
+            // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
+            await new Promise(resolve => setTimeout(resolve, 300)); // Simulate loading
+            
+            trackTypes = [
+                {
+                    id: 1,
+                    name: 'Gerade Bahn',
+                    description: 'Einfache gerade Strecke',
+                    icon_url: '/static/track-icons/gerade.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 2,
+                    name: 'Rechtskurve',
+                    description: 'Kurve nach rechts',
+                    icon_url: '/static/track-icons/rechtskurve.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 3,
+                    name: 'Linkskurve',
+                    description: 'Kurve nach links',
+                    icon_url: '/static/track-icons/linkskurve.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 4,
+                    name: 'S-Kurve',
+                    description: 'Doppelte Kurve',
+                    icon_url: '/static/track-icons/s_kurve.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 5,
+                    name: 'Hindernis',
+                    description: 'Bahn mit Hindernis',
+                    icon_url: '/static/track-icons/hindernis.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 6,
+                    name: 'Loop',
+                    description: 'Looping-Bahn',
+                    icon_url: '/static/track-icons/loop.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 7,
+                    name: 'Rampe',
+                    description: 'Erhöhte Bahn',
+                    icon_url: '/static/track-icons/rampe.png',
+                    is_placeholder: false
+                },
+                {
+                    id: 8,
+                    name: 'Tunnel',
+                    description: 'Tunnel-Passage',
+                    icon_url: '/static/track-icons/tunnel.png',
+                    is_placeholder: false
+                }
+            ];
+            
+            console.log('✅ Track types loaded (Mock):', trackTypes.length);
+            renderTrackTypes();
+        }
+
+        // Render Functions
+        function renderPlaces() {
+            const grid = document.getElementById('placesGrid');
+            grid.innerHTML = '';
+
+            hideElement('placesLoading');
+
+            if (places.length === 0) {
+                showElement('placesEmpty');
                 return;
             }
 
-            const isMultipleWinners = winners.length > 1;
-            const winnerCard = document.createElement('div');
-            winnerCard.className = `winner-card ${isMultipleWinners ? 'tie' : ''}`;
+            showElement('placesGrid');
 
-            if (isMultipleWinners) {
-                winnerCard.innerHTML = `
-                    <div class="winner-title">🤝 Gleichstand! 🤝</div>
-                    <div class="winner-name">${winners.map(w => w.name).join(' & ')}</div>
-                    <div class="winner-score">${winners[0].total} Schläge</div>
+            places.forEach(place => {
+                const placeCard = document.createElement('div');
+                placeCard.className = `place-card ${place.is_default ? 'default' : ''}`;
+                
+                placeCard.innerHTML = `
+                    <div class="place-card-header">
+                        <div class="place-name">${escapeHtml(place.name)}</div>
+                        ${place.is_default ? '<span class="default-badge">Standard</span>' : ''}
+                    </div>
+                    <div class="place-info">
+                        <div class="place-stat">⛳ ${place.track_count} Bahnen</div>
+                        <div class="place-stat">
+                            ${place.has_custom_config ? '🎯 Individuelle Konfiguration' : '📋 Standard Konfiguration'}
+                        </div>
+                    </div>
+                    <div class="place-actions">
+                        <button class="btn btn-secondary" onclick="editPlace(${place.id})">
+                            ✏️ Bearbeiten
+                        </button>
+                        ${!place.is_default ? `<button class="btn btn-danger" onclick="deletePlace(${place.id}, '${escapeHtml(place.name)}')">🗑️ Löschen</button>` : ''}
+                    </div>
                 `;
-            } else {
-                winnerCard.innerHTML = `
-                    <div class="winner-title">🎉 Gewinner 🎉</div>
-                    <div class="winner-name">${winners[0].name}</div>
-                    <div class="winner-score">${winners[0].total} Schläge</div>
-                `;
-            }
-
-            winnerSection.appendChild(winnerCard);
+                
+                grid.appendChild(placeCard);
+            });
+            
+            console.log('✅ Places rendered:', places.length);
         }
 
-        // Render results grid
-        function renderResultsGrid(results) {
-            const grid = document.getElementById('resultsGrid');
+        function renderTrackTypes() {
+            const grid = document.getElementById('trackTypesGrid');
             grid.innerHTML = '';
 
-            results.forEach((result, index) => {
-                const card = document.createElement('div');
-                let cardClass = 'result-card';
-                let position = '';
+            hideElement('typesLoading');
+            showElement('trackTypesGrid');
 
-                if (result.is_tie) {
-                    cardClass += ' tie';
-                    position = '🤝';
-                } else if (index === 0 && result.total > 0) {
-                    cardClass += ' first';
-                    position = '🥇';
-                } else if (index === 1) {
-                    cardClass += ' second';
-                    position = '🥈';
-                } else if (index === 2) {
-                    cardClass += ' third';
-                    position = '🥉';
-                } else {
-                    position = `${index + 1}.`;
-                }
-
-                card.className = cardClass;
-                card.innerHTML = `
-                    <div class="result-position">${position}</div>
-                    <div class="result-info">
-                        <div class="result-name">${result.name}</div>
-                        <div class="result-details">
-                            ${result.total > 0 ? `Ø ${(result.total / gameData.track_count).toFixed(1)} pro Bahn` : 'Noch keine Scores'}
-                        </div>
+            trackTypes.forEach(type => {
+                const typeCard = document.createElement('div');
+                typeCard.className = `track-type-card ${type.is_placeholder ? 'placeholder' : ''}`;
+                
+                typeCard.innerHTML = `
+                    <div class="track-icon">
+                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
                     </div>
-                    <div class="result-score">
-                        ${result.total > 0 ? result.total : '-'}
-                    </div>
+                    <div class="track-type-name">${escapeHtml(type.name)}</div>
+                    <div class="track-type-desc">${escapeHtml(type.description || '')}</div>
                 `;
-
-                grid.appendChild(card);
+                
+                grid.appendChild(typeCard);
             });
+            
+            console.log('✅ Track types rendered:', trackTypes.length);
         }
 
-        // Render detailed scores table with track icons
-        function renderDetailedScoresTable(results, trackConfig) {
-            const hasScores = results.some(r => r.total > 0);
-            if (!hasScores) return;
+        // Place Management
+        function openAddPlaceModal() {
+            console.log('🔧 Opening add place modal...');
+            isEditMode = false;
+            currentPlaceId = null;
+            document.getElementById('placeModalTitle').textContent = 'Neuer Minigolf-Platz';
+            document.getElementById('placeName').value = '';
+            document.getElementById('placeTrackCount').value = '18';
+            document.getElementById('isDefaultPlace').checked = false;
+            document.getElementById('trackEditor').style.display = 'none';
+            clearMessage();
+            document.getElementById('placeModal').classList.add('show');
+        }
 
-            const detailedScores = document.getElementById('detailedScores');
-            const table = document.getElementById('scoresTable');
+        async function editPlace(placeId) {
+            console.log('✏️ Editing place:', placeId);
+            isEditMode = true;
+            currentPlaceId = placeId;
+            currentTrackConfig = []; // Reset track config when editing new place
             
-            detailedScores.style.display = 'block';
-            table.innerHTML = '';
+            const place = places.find(p => p.id === placeId);
+            if (!place) return;
 
-            // Create header
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
+            document.getElementById('placeModalTitle').textContent = `${place.name} bearbeiten`;
+            document.getElementById('placeName').value = place.name;
+            document.getElementById('placeTrackCount').value = place.track_count;
+            document.getElementById('isDefaultPlace').checked = place.is_default;
             
-            // First column: Track
-            const trackHeader = document.createElement('th');
-            trackHeader.textContent = 'Bahn';
-            headerRow.appendChild(trackHeader);
+            // Load track configuration
+            await loadTrackConfiguration(placeId);
             
-            // Player columns
-            results.forEach(result => {
-                const playerHeader = document.createElement('th');
-                playerHeader.textContent = result.name;
-                headerRow.appendChild(playerHeader);
-            });
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
+            document.getElementById('trackEditor').style.display = 'block';
+            clearMessage();
+            document.getElementById('placeModal').classList.add('show');
+        }
 
-            // Create body
-            const tbody = document.createElement('tbody');
+        async function loadTrackConfiguration(placeId) {
+            console.log('🎯 Loading track config for place:', placeId);
             
-            // Track rows
-            for (let track = 1; track <= gameData.track_count; track++) {
-                const row = document.createElement('tr');
-                
-                // Track cell with icon
-                const trackCell = document.createElement('td');
-                trackCell.className = 'track-cell';
-                
-                const trackData = trackConfig.find(t => t.track_number === track);
-                if (trackData) {
-                    trackCell.innerHTML = `
-                        <div class="track-icon-table">
-                            <img src="${trackData.track_type_icon}" alt="${trackData.track_type_name}" 
-                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
-                        </div>
-                        <div class="track-number">${track}</div>
-                    `;
-                } else {
-                    trackCell.innerHTML = `
-                        <div class="track-icon-table">🎯</div>
-                        <div class="track-number">${track}</div>
-                    `;
+            // ALWAYS USE MOCK DATA - No API calls
+            const place = places.find(p => p.id === placeId);
+            if (!place) return;
+
+            // Create or load existing track configuration
+            if (!currentTrackConfig.length || currentTrackConfig.length !== place.track_count) {
+                currentTrackConfig = [];
+                for (let i = 1; i <= place.track_count; i++) {
+                    // Cycle through track types for variety
+                    const typeIndex = (i - 1) % trackTypes.length;
+                    const trackType = trackTypes[typeIndex];
+                    
+                    currentTrackConfig.push({
+                        track_number: i,
+                        track_type_id: trackType.id,
+                        track_type_name: trackType.name,
+                        track_type_icon: trackType.icon_url
+                    });
                 }
-                
-                row.appendChild(trackCell);
-                
-                // Score cells
-                results.forEach(result => {
-                    const scoreCell = document.createElement('td');
-                    const score = result.scores[track];
-                    scoreCell.textContent = score || '-';
-                    row.appendChild(scoreCell);
-                });
-                
-                tbody.appendChild(row);
             }
             
-            // Total row
-            const totalRow = document.createElement('tr');
-            totalRow.style.background = '#f8fafc';
-            totalRow.style.fontWeight = 'bold';
-            
-            const totalLabelCell = document.createElement('td');
-            totalLabelCell.innerHTML = '<strong>Total</strong>';
-            totalLabelCell.style.color = '#3b5c6c';
-            totalLabelCell.style.fontSize = '1.1em';
-            totalRow.appendChild(totalLabelCell);
-            
-            results.forEach(result => {
-                const totalCell = document.createElement('td');
-                totalCell.textContent = result.total > 0 ? result.total : '-';
-                totalCell.style.color = '#3b5c6c';
-                totalCell.style.fontSize = '1.1em';
-                totalRow.appendChild(totalCell);
+            console.log('✅ Track config loaded (Mock):', currentTrackConfig.length);
+            renderTrackConfiguration(currentTrackConfig);
+        }
+
+        function renderTrackConfiguration(trackConfig) {
+            const list = document.getElementById('trackList');
+            list.innerHTML = '';
+
+            trackConfig.forEach(track => {
+                const trackItem = document.createElement('div');
+                trackItem.className = 'track-list-item';
+                
+                trackItem.innerHTML = `
+                    <div class="track-info">
+                        <div class="track-number">Bahn ${track.track_number}</div>
+                        <div class="track-type-name">${escapeHtml(track.track_type_name)}</div>
+                    </div>
+                    <div class="track-icon-clickable" onclick="selectTrackType(${track.track_number})" title="Bahn-Typ ändern">
+                        <img src="${track.track_type_icon}" alt="${escapeHtml(track.track_type_name)}" 
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    </div>
+                `;
+                
+                list.appendChild(trackItem);
             });
             
-            tbody.appendChild(totalRow);
-            table.appendChild(tbody);
+            console.log('✅ Track config rendered as list:', trackConfig.length);
         }
 
-        // Initialize page
-        function initializePage() {
-            console.log('🚀 Results page loaded');
+        function selectTrackType(trackNumber) {
+            console.log('🎯 Selecting track type for track:', trackNumber);
+            currentTrackNumber = trackNumber;
+            document.getElementById('trackTypeModalTitle').textContent = `Bahn ${trackNumber} - Typ auswählen`;
             
-            // Update game info
-            document.getElementById('gamePlace').textContent = gameData.place;
-            document.getElementById('gameDate').textContent = gameData.date;
-            document.getElementById('gameTrackCount').textContent = `${gameData.track_count} Bahnen`;
-            
-            // Update edit link
-            document.getElementById('editScoreBtn').href = `/score/${gameData.id}`;
-            
-            // Get track configuration for this place
-            const trackConfig = getTrackConfigForPlace(gameData.place_id, gameData.track_count);
-            
-            // Calculate and render results
-            const results = calculateResults();
-            renderWinnerSection(results);
-            renderResultsGrid(results);
-            renderDetailedScoresTable(results, trackConfig);
-            
-            console.log('✅ Results rendered with track icons');
+            // Render track type selector
+            const selector = document.getElementById('trackTypeSelector');
+            selector.innerHTML = '';
+
+            trackTypes.forEach(type => {
+                const typeItem = document.createElement('div');
+                typeItem.className = 'track-type-card';
+                typeItem.style.cursor = 'pointer';
+                typeItem.onclick = () => updateTrackType(type.id);
+                
+                typeItem.innerHTML = `
+                    <div class="track-icon">
+                        <img src="${type.icon_url}" alt="${escapeHtml(type.name)}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    </div>
+                    <div class="track-type-name">${escapeHtml(type.name)}</div>
+                `;
+                
+                selector.appendChild(typeItem);
+            });
+
+            document.getElementById('trackTypeModal').classList.add('show');
         }
 
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', initializePage);
+        async function updateTrackType(trackTypeId) {
+            if (!currentPlaceId || !currentTrackNumber) return;
+
+            console.log('🔄 Updating track type:', trackTypeId, 'for track:', currentTrackNumber);
+
+            try {
+                // Find the new track type
+                const newTrackType = trackTypes.find(type => type.id === trackTypeId);
+                if (!newTrackType) {
+                    throw new Error('Track type not found');
+                }
+
+                // Update the track configuration
+                const trackIndex = currentTrackConfig.findIndex(track => track.track_number === currentTrackNumber);
+                if (trackIndex !== -1) {
+                    currentTrackConfig[trackIndex] = {
+                        track_number: currentTrackNumber,
+                        track_type_id: newTrackType.id,
+                        track_type_name: newTrackType.name,
+                        track_type_icon: newTrackType.icon_url
+                    };
+                }
+
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Re-render the track configuration
+                renderTrackConfiguration(currentTrackConfig);
+                
+                closeTrackTypeModal();
+                showMessage(`Bahn ${currentTrackNumber} erfolgreich auf "${newTrackType.name}" geändert! (Mock)`, 'success');
+                
+                console.log('✅ Track type updated successfully');
+
+            } catch (error) {
+                console.error('❌ Fehler beim Aktualisieren des Track-Typs:', error);
+                showMessage('Fehler beim Aktualisieren: ' + error.message, 'error');
+            }
+        }
+
+        // ROBUST FORM HANDLING - NO API CALLS THAT CAN FAIL
+        document.getElementById('placeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('💾 Saving place...');
+            
+            const saveBtn = document.getElementById('savePlaceBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '⏳ Speichere...';
+
+            const formData = {
+                name: document.getElementById('placeName').value.trim(),
+                track_count: parseInt(document.getElementById('placeTrackCount').value),
+                is_default: document.getElementById('isDefaultPlace').checked
+            };
+
+            if (!formData.name) {
+                showMessage('Platz-Name ist erforderlich', 'error');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                return;
+            }
+
+            try {
+                // ALWAYS USE MOCK RESPONSE - No API calls that can fail
+                console.log('Using mock save response...');
+                await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
+                
+                if (isEditMode && currentPlaceId) {
+                    // Update existing place in mock data
+                    const placeIndex = places.findIndex(p => p.id === currentPlaceId);
+                    if (placeIndex !== -1) {
+                        places[placeIndex] = {
+                            ...places[placeIndex],
+                            ...formData
+                        };
+                    }
+                    console.log('✅ Place updated (Mock)');
+                } else {
+                    // Add new place to mock data
+                    const newPlace = {
+                        id: Date.now(), // Simple ID generation for mock
+                        ...formData,
+                        has_custom_config: false
+                    };
+                    places.unshift(newPlace);
+                    console.log('✅ Place created (Mock)');
+                }
+                
+                closePlaceModal();
+                renderPlaces(); // Re-render with updated data
+                showMessage(
+                    (isEditMode ? 'Platz erfolgreich aktualisiert!' : 'Platz erfolgreich erstellt!') + ' (Mock)', 
+                    'success'
+                );
+
+            } catch (error) {
+                console.error('❌ Fehler beim Speichern:', error);
+                showMessage('Fehler beim Speichern: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        });
+
+        async function deletePlace(placeId, placeName) {
+            if (!confirm(`Möchtest du den Platz "${placeName}" wirklich löschen?\n\nAlle gespeicherten Spiele von diesem Platz bleiben erhalten.`)) {
+                return;
+            }
+
+            console.log('🗑️ Deleting place:', placeId);
+
+            try {
+                // ALWAYS USE MOCK RESPONSE - No API calls that can fail
+                await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
+                
+                // Remove from mock data
+                places = places.filter(p => p.id !== placeId);
+                renderPlaces(); // Re-render with updated data
+                showMessage('Platz erfolgreich gelöscht! (Mock)', 'success');
+                console.log('✅ Place deleted (Mock)');
+
+            } catch (error) {
+                console.error('❌ Fehler beim Löschen:', error);
+                showMessage('Fehler beim Löschen: ' + error.message, 'error');
+            }
+        }
+
+        // Modal Management
+        function closePlaceModal() {
+            document.getElementById('placeModal').classList.remove('show');
+            clearMessage();
+        }
+
+        function closeTrackTypeModal() {
+            document.getElementById('trackTypeModal').classList.remove('show');
+        }
+
+        // Utility Functions
+        function showElement(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showMessage(text, type = 'success') {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(clearMessage, 5000);
+            }
+        }
+
+        function clearMessage() {
+            document.getElementById('messageArea').innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event Handlers
+        document.getElementById('placeModal').addEventListener('click', function(e) {
+            if (e.target === this) closePlaceModal();
+        });
+
+        document.getElementById('trackTypeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeTrackTypeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePlaceModal();
+                closeTrackTypeModal();
+            }
+        });
+
+        // Track count change handler
+        document.getElementById('placeTrackCount').addEventListener('change', function() {
+            if (isEditMode && currentPlaceId) {
+                // Reset track config when track count changes
+                currentTrackConfig = [];
+                // Re-load track configuration if track count changes
+                setTimeout(() => {
+                    loadTrackConfiguration(currentPlaceId);
+                }, 100);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Settings page loaded - MOCK VERSION');
+            loadData();
+        });
     </script>
 </body>
 </html>

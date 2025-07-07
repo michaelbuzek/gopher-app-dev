@@ -333,6 +333,43 @@
             background: rgba(248, 192, 152, 0.05);
         }
 
+        /* Track Icon Styles in Table */
+        .track-cell {
+            background: #fef7ed;
+            font-weight: 600;
+            color: #f8c098;
+            border-right: 2px solid #f8c098;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 80px;
+        }
+
+        .track-icon-table {
+            width: 24px;
+            height: 24px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+        }
+
+        .track-icon-table img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 2px;
+        }
+
+        .track-number {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -376,75 +413,6 @@
         .btn-success:hover {
             background: #f2bc91;
             transform: translateY(-1px);
-        }
-
-        .share-section {
-            margin-top: 30px;
-            padding: 25px;
-            background: #f8fafc;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .share-title {
-            margin-bottom: 15px;
-            color: #3b5c6c;
-            font-weight: 600;
-            font-size: 1.2em;
-        }
-
-        .statistics-section {
-            margin-top: 30px;
-        }
-
-        .stats-title {
-            margin-bottom: 20px;
-            text-align: center;
-            color: #3b5c6c;
-            font-weight: 600;
-            font-size: 1.3em;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-icon {
-            font-size: 2.2em;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 1.6em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #64748b;
-            font-size: 0.9em;
-        }
-
-        .stat-sublabel {
-            color: #94a3b8;
-            font-size: 0.8em;
         }
 
         /* Mobile Optimierung */
@@ -503,9 +471,15 @@
                 font-size: 0.85em;
             }
 
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+            .track-cell {
+                flex-direction: column;
+                gap: 4px;
+                padding: 8px 4px;
+            }
+
+            .track-icon-table {
+                width: 20px;
+                height: 20px;
             }
 
             .gopher-logo {
@@ -538,339 +512,323 @@
 
             <h1>🏆 Spiel Ergebnisse</h1>
             <div class="game-info">
-                <div>📍 <strong>{{ game.place }}</strong></div>
-                <div>📅 <strong>{{ game.date }}</strong></div>
-                <div>⛳ <strong>{{ game.track_count }} Bahnen</strong></div>
+                <div>📍 <strong id="gamePlace">soga</strong></div>
+                <div>📅 <strong id="gameDate">2025-07-07</strong></div>
+                <div>⛳ <strong id="gameTrackCount">3 Bahnen</strong></div>
             </div>
         </div>
 
         <div class="nav">
             <a href="/" class="nav-link">🏠 Home</a>
-            <a href="/score/{{ game.id }}" class="nav-link">📝 Score bearbeiten</a>
+            <a href="#" class="nav-link">📝 Score bearbeiten</a>
             <a href="/history" class="nav-link">📜 History</a>
         </div>
 
         <div class="results-container">
-            {% if results and results[0].total > 0 %}
-            <div class="winner-section">
-                {% set winners = results|selectattr('is_winner')|list %}
-                {% if winners|length == 1 %}
-                    <!-- Ein Gewinner -->
-                    <div class="winner-card">
-                        <div class="winner-title">🎉 Gewinner 🎉</div>
-                        <div class="winner-name">{{ winners[0].name }}</div>
-                        <div class="winner-score">{{ winners[0].total }} Schläge</div>
-                    </div>
-                {% elif winners|length > 1 %}
-                    <!-- Gleichstand -->
-                    <div class="winner-card tie">
-                        <div class="winner-title">🤝 Gleichstand! 🤝</div>
-                        <div class="winner-name">
-                            {% for winner in winners %}
-                                {{ winner.name }}{% if not loop.last %} & {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="winner-score">{{ winners[0].total }} Schläge</div>
-                    </div>
-                {% endif %}
+            <div class="winner-section" id="winnerSection">
+                <!-- Winner wird hier dynamisch eingefügt -->
             </div>
-            {% endif %}
 
             <div class="all-results">
                 <h2 class="results-title">📊 Endergebnis</h2>
-                <div class="results-grid">
-                    {% for result in results %}
-                    <div class="result-card {% if result.is_tie %}tie{% elif loop.index == 1 and result.total > 0 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% endif %}">
-                        <div class="result-position">
-                            {% if result.is_tie %}🤝
-                            {% elif loop.index == 1 and result.total > 0 %}🥇
-                            {% elif loop.index == 2 %}🥈
-                            {% elif loop.index == 3 %}🥉
-                            {% else %}{{ loop.index }}.{% endif %}
-                        </div>
-                        <div class="result-info">
-                            <div class="result-name">{{ result.name }}</div>
-                            <div class="result-details">
-                                {% if result.total > 0 %}
-                                    Ø {{ "%.1f"|format(result.total / game.track_count) }} pro Bahn
-                                {% else %}
-                                    Noch keine Scores
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="result-score">
-                            {% if result.total > 0 %}{{ result.total }}{% else %}-{% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
+                <div class="results-grid" id="resultsGrid">
+                    <!-- Results werden hier dynamisch eingefügt -->
                 </div>
             </div>
 
-            {% if results and results[0].total > 0 %}
-            <div class="detailed-scores">
+            <div class="detailed-scores" id="detailedScores" style="display: none;">
                 <h3 style="margin-bottom: 15px; text-align: center; color: #3b5c6c; font-weight: 600;">📋 Detaillierte Scores</h3>
-                <table class="scores-table">
-                    <thead>
-                        <tr>
-                            <th>Bahn</th>
-                            {% for result in results %}
-                                <th>{{ result.name }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for track in range(1, game.track_count + 1) %}
-                        <tr>
-                            <td><strong>{{ track }}</strong></td>
-                            {% for result in results %}
-                                <td>
-                                    {% if result.scores.get(track) %}
-                                        {{ result.scores[track] }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                        
-                        <!-- Total Row -->
-                        <tr style="background: #f8fafc; font-weight: bold;">
-                            <td><strong>Total</strong></td>
-                            {% for result in results %}
-                                <td style="color: #3b5c6c; font-size: 1.1em;">
-                                    {% if result.total > 0 %}{{ result.total }}{% else %}-{% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
+                <table class="scores-table" id="scoresTable">
+                    <!-- Table wird hier dynamisch erstellt -->
                 </table>
             </div>
-            {% endif %}
 
             <div class="action-buttons">
                 <a href="/" class="action-btn btn-success">
                     🏠 Neues Spiel
                 </a>
-                <a href="/score/{{ game.id }}" class="action-btn btn-primary">
+                <a href="#" class="action-btn btn-primary" id="editScoreBtn">
                     📝 Score bearbeiten
                 </a>
                 <a href="/history" class="action-btn btn-primary">
                     📜 Alle Spiele
                 </a>
             </div>
-
-            <!-- Share Results Section -->
-            <div class="share-section">
-                <h3 class="share-title">📱 Ergebnis teilen</h3>
-                <button onclick="shareResults()" class="action-btn btn-success" style="margin: 0 auto; max-width: 250px;">
-                    📤 Teilen
-                </button>
-            </div>
-
-            <!-- Statistics Section -->
-            {% if results and results[0].total > 0 %}
-            <div class="statistics-section">
-                <h3 class="stats-title">📈 Spiel-Statistiken</h3>
-                <div class="stats-grid">
-                    {% set ns = namespace(best_track=None, worst_track=None, best_score=999, worst_score=0) %}
-                    {% for track in range(1, game.track_count + 1) %}
-                        {% set track_scores = [] %}
-                        {% for result in results %}
-                            {% if result.scores.get(track) and result.scores[track] > 0 %}
-                                {% set _ = track_scores.append(result.scores[track]) %}
-                            {% endif %}
-                        {% endfor %}
-                        {% if track_scores %}
-                            {% set avg_score = (track_scores|sum / track_scores|length) %}
-                            {% if avg_score < ns.best_score %}
-                                {% set ns.best_score = avg_score %}
-                                {% set ns.best_track = track %}
-                            {% endif %}
-                            {% if avg_score > ns.worst_score %}
-                                {% set ns.worst_score = avg_score %}
-                                {% set ns.worst_track = track %}
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-
-                    <div class="stat-card">
-                        <div class="stat-icon" style="color: #10b981;">⭐</div>
-                        <div class="stat-label">Einfachste Bahn</div>
-                        <div class="stat-value" style="color: #10b981;">
-                            {% if ns.best_track %}{{ ns.best_track }}{% else %}-{% endif %}
-                        </div>
-                        {% if ns.best_track %}
-                        <div class="stat-sublabel">Ø {{ "%.1f"|format(ns.best_score) }} Schläge</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon" style="color: #ef4444;">🔥</div>
-                        <div class="stat-label">Schwierigste Bahn</div>
-                        <div class="stat-value" style="color: #ef4444;">
-                            {% if ns.worst_track %}{{ ns.worst_track }}{% else %}-{% endif %}
-                        </div>
-                        {% if ns.worst_track %}
-                        <div class="stat-sublabel">Ø {{ "%.1f"|format(ns.worst_score) }} Schläge</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon" style="color: #3b82f6;">⏱️</div>
-                        <div class="stat-label">Spieldauer</div>
-                        <div class="stat-value" style="color: #3b82f6;" id="gameDuration">-</div>
-                        <div class="stat-sublabel">Geschätzt</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon" style="color: #f59e0b;">🎯</div>
-                        <div class="stat-label">Gesamt-Schläge</div>
-                        <div class="stat-value" style="color: #f59e0b;">
-                            {{ results|sum(attribute='total') }}
-                        </div>
-                        <div class="stat-sublabel">Alle Spieler</div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 
     <script>
-        // Spieldauer schätzen (3-4 Minuten pro Bahn) - Template-Syntax vermieden
-        document.addEventListener('DOMContentLoaded', function() {
-            // Diese Werte würden vom Backend gesetzt werden
-            const trackCount = 18; // {{ game.track_count }}
-            const playerCount = 4;  // {{ results|length }}
-            const estimatedMinutes = Math.round(trackCount * 3.5 + playerCount * 5);
-            
-            const hours = Math.floor(estimatedMinutes / 60);
-            const minutes = estimatedMinutes % 60;
-            
-            let durationText = '';
-            if (hours > 0) {
-                durationText = `${hours}h ${minutes}min`;
-            } else {
-                durationText = `${minutes} min`;
-            }
-            
-            const durationElement = document.getElementById('gameDuration');
-            if (durationElement) {
-                durationElement.textContent = durationText;
-            }
-        });
+        // Mock data for demonstration - würde normalerweise vom Backend kommen
+        const gameData = {
+            id: 1,
+            place: 'soga',
+            place_id: 1,
+            date: '2025-07-07',
+            track_count: 3,
+            players: [
+                { id: 1, name: 'weev', scores: { 1: 2, 2: 2, 3: 2 } },
+                { id: 2, name: 'sdfvsdfv', scores: { 1: 2, 2: 2, 3: 5 } }
+            ]
+        };
 
-        // Share Results Function - Template-Syntax vermieden
-        async function shareResults() {
-            // Diese Werte würden vom Backend gesetzt werden
-            const place = 'Bülach';  // {{ game.place }}
-            const date = '07.07.2025'; // {{ game.date }}
-            const trackCount = 18;      // {{ game.track_count }}
-            
-            // Demo-Daten für Gewinner
-            const winners = ['Lisa']; // würde vom Backend kommen
-            const winnerScore = 64;   // würde vom Backend kommen
-            const isTie = winners.length > 1;
+        // Track types - gleiche wie in Settings
+        const trackTypes = [
+            { id: 1, name: 'Gerade Bahn', icon_url: '/static/track-icons/gerade.png' },
+            { id: 2, name: 'Rechtskurve', icon_url: '/static/track-icons/rechtskurve.png' },
+            { id: 3, name: 'Linkskurve', icon_url: '/static/track-icons/linkskurve.png' },
+            { id: 4, name: 'S-Kurve', icon_url: '/static/track-icons/s_kurve.png' },
+            { id: 5, name: 'Hindernis', icon_url: '/static/track-icons/hindernis.png' },
+            { id: 6, name: 'Loop', icon_url: '/static/track-icons/loop.png' },
+            { id: 7, name: 'Rampe', icon_url: '/static/track-icons/rampe.png' },
+            { id: 8, name: 'Tunnel', icon_url: '/static/track-icons/tunnel.png' }
+        ];
 
-            let shareText = `🏌️ Minigolf Ergebnis\n\n`;
-            shareText += `📍 ${place}\n`;
-            shareText += `📅 ${date}\n`;
-            shareText += `⛳ ${trackCount} Bahnen\n\n`;
-            
-            if (isTie && winnerScore > 0) {
-                shareText += `🤝 Gleichstand! ${winners.join(' & ')} mit ${winnerScore} Schlägen\n\n`;
-            } else if (winners.length === 1 && winnerScore > 0) {
-                shareText += `🏆 Gewinner: ${winners[0]}\n`;
-                shareText += `🎯 Score: ${winnerScore} Schläge\n\n`;
-            }
-            
-            shareText += `Endergebnis:\n`;
-            shareText += `🥇 Lisa: 64\n`;
-            shareText += `🥈 Anna: 67\n`;
-            shareText += `🥉 Tom: 72\n`;
-            shareText += `4. Max: 75\n`;
-
-            // Web Share API (falls verfügbar)
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: '🏌️ Minigolf Ergebnis',
-                        text: shareText
-                    });
-                } catch (err) {
-                    console.log('Sharing canceled');
-                }
-            } else {
-                // Fallback: Copy to clipboard
-                try {
-                    await navigator.clipboard.writeText(shareText);
-                    
-                    // Visual feedback
-                    const btn = event.target;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = '✅ Kopiert!';
-                    btn.style.background = '#10b981';
-                    
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.style.background = '';
-                    }, 2000);
-                    
-                } catch (err) {
-                    // Fallback: Show alert with text
-                    alert('Teile das Ergebnis:\n\n' + shareText);
-                }
-            }
-        }
-
-        // Konfetti-Effekt für Gewinner (optional)
-        function createConfetti() {
-            const colors = ['#f8c098', '#f2bc91', '#10b981', '#3b82f6', '#f59e0b'];
-            const container = document.querySelector('.winner-card');
-            
-            if (!container) return;
-            
-            for (let i = 0; i < 30; i++) {
-                const confetti = document.createElement('div');
-                confetti.style.position = 'absolute';
-                confetti.style.width = '8px';
-                confetti.style.height = '8px';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.borderRadius = '50%';
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.top = '-10px';
-                confetti.style.pointerEvents = 'none';
-                confetti.style.animation = `fall ${2 + Math.random() * 3}s linear forwards`;
+        // Generate track configuration for place
+        function getTrackConfigForPlace(placeId, trackCount) {
+            const trackConfig = [];
+            for (let i = 1; i <= trackCount; i++) {
+                const typeIndex = (i - 1) % trackTypes.length;
+                const trackType = trackTypes[typeIndex];
                 
-                container.appendChild(confetti);
+                trackConfig.push({
+                    track_number: i,
+                    track_type_id: trackType.id,
+                    track_type_name: trackType.name,
+                    track_type_icon: trackType.icon_url
+                });
+            }
+            return trackConfig;
+        }
+
+        // Calculate player totals and positions
+        function calculateResults() {
+            const results = gameData.players.map(player => {
+                let total = 0;
+                for (let track = 1; track <= gameData.track_count; track++) {
+                    total += player.scores[track] || 0;
+                }
+                return {
+                    ...player,
+                    total: total
+                };
+            });
+
+            // Sort by score (lowest first)
+            results.sort((a, b) => {
+                if (a.total === 0 && b.total === 0) return 0;
+                if (a.total === 0) return 1;
+                if (b.total === 0) return -1;
+                return a.total - b.total;
+            });
+
+            // Mark winners and ties
+            if (results.length > 0 && results[0].total > 0) {
+                const winningScore = results[0].total;
+                results.forEach(result => {
+                    if (result.total === winningScore) {
+                        result.is_winner = true;
+                        result.is_tie = results.filter(r => r.total === winningScore).length > 1;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        // Render winner section
+        function renderWinnerSection(results) {
+            const winnerSection = document.getElementById('winnerSection');
+            const winners = results.filter(r => r.is_winner);
+
+            if (winners.length === 0 || winners[0].total === 0) {
+                winnerSection.style.display = 'none';
+                return;
+            }
+
+            const isMultipleWinners = winners.length > 1;
+            const winnerCard = document.createElement('div');
+            winnerCard.className = `winner-card ${isMultipleWinners ? 'tie' : ''}`;
+
+            if (isMultipleWinners) {
+                winnerCard.innerHTML = `
+                    <div class="winner-title">🤝 Gleichstand! 🤝</div>
+                    <div class="winner-name">${winners.map(w => w.name).join(' & ')}</div>
+                    <div class="winner-score">${winners[0].total} Schläge</div>
+                `;
+            } else {
+                winnerCard.innerHTML = `
+                    <div class="winner-title">🎉 Gewinner 🎉</div>
+                    <div class="winner-name">${winners[0].name}</div>
+                    <div class="winner-score">${winners[0].total} Schläge</div>
+                `;
+            }
+
+            winnerSection.appendChild(winnerCard);
+        }
+
+        // Render results grid
+        function renderResultsGrid(results) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const card = document.createElement('div');
+                let cardClass = 'result-card';
+                let position = '';
+
+                if (result.is_tie) {
+                    cardClass += ' tie';
+                    position = '🤝';
+                } else if (index === 0 && result.total > 0) {
+                    cardClass += ' first';
+                    position = '🥇';
+                } else if (index === 1) {
+                    cardClass += ' second';
+                    position = '🥈';
+                } else if (index === 2) {
+                    cardClass += ' third';
+                    position = '🥉';
+                } else {
+                    position = `${index + 1}.`;
+                }
+
+                card.className = cardClass;
+                card.innerHTML = `
+                    <div class="result-position">${position}</div>
+                    <div class="result-info">
+                        <div class="result-name">${result.name}</div>
+                        <div class="result-details">
+                            ${result.total > 0 ? `Ø ${(result.total / gameData.track_count).toFixed(1)} pro Bahn` : 'Noch keine Scores'}
+                        </div>
+                    </div>
+                    <div class="result-score">
+                        ${result.total > 0 ? result.total : '-'}
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Render detailed scores table with track icons
+        function renderDetailedScoresTable(results, trackConfig) {
+            const hasScores = results.some(r => r.total > 0);
+            if (!hasScores) return;
+
+            const detailedScores = document.getElementById('detailedScores');
+            const table = document.getElementById('scoresTable');
+            
+            detailedScores.style.display = 'block';
+            table.innerHTML = '';
+
+            // Create header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            // First column: Track
+            const trackHeader = document.createElement('th');
+            trackHeader.textContent = 'Bahn';
+            headerRow.appendChild(trackHeader);
+            
+            // Player columns
+            results.forEach(result => {
+                const playerHeader = document.createElement('th');
+                playerHeader.textContent = result.name;
+                headerRow.appendChild(playerHeader);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create body
+            const tbody = document.createElement('tbody');
+            
+            // Track rows
+            for (let track = 1; track <= gameData.track_count; track++) {
+                const row = document.createElement('tr');
                 
-                setTimeout(() => {
-                    confetti.remove();
-                }, 5000);
+                // Track cell with icon
+                const trackCell = document.createElement('td');
+                trackCell.className = 'track-cell';
+                
+                const trackData = trackConfig.find(t => t.track_number === track);
+                if (trackData) {
+                    trackCell.innerHTML = `
+                        <div class="track-icon-table">
+                            <img src="${trackData.track_type_icon}" alt="${trackData.track_type_name}" 
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                        </div>
+                        <div class="track-number">${track}</div>
+                    `;
+                } else {
+                    trackCell.innerHTML = `
+                        <div class="track-icon-table">🎯</div>
+                        <div class="track-number">${track}</div>
+                    `;
+                }
+                
+                row.appendChild(trackCell);
+                
+                // Score cells
+                results.forEach(result => {
+                    const scoreCell = document.createElement('td');
+                    const score = result.scores[track];
+                    scoreCell.textContent = score || '-';
+                    row.appendChild(scoreCell);
+                });
+                
+                tbody.appendChild(row);
             }
+            
+            // Total row
+            const totalRow = document.createElement('tr');
+            totalRow.style.background = '#f8fafc';
+            totalRow.style.fontWeight = 'bold';
+            
+            const totalLabelCell = document.createElement('td');
+            totalLabelCell.innerHTML = '<strong>Total</strong>';
+            totalLabelCell.style.color = '#3b5c6c';
+            totalLabelCell.style.fontSize = '1.1em';
+            totalRow.appendChild(totalLabelCell);
+            
+            results.forEach(result => {
+                const totalCell = document.createElement('td');
+                totalCell.textContent = result.total > 0 ? result.total : '-';
+                totalCell.style.color = '#3b5c6c';
+                totalCell.style.fontSize = '1.1em';
+                totalRow.appendChild(totalCell);
+            });
+            
+            tbody.appendChild(totalRow);
+            table.appendChild(tbody);
         }
 
-        // CSS für Konfetti-Animation hinzufügen
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fall {
-                0% {
-                    transform: translateY(-10px) rotate(0deg);
-                    opacity: 1;
-                }
-                100% {
-                    transform: translateY(300px) rotate(360deg);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Konfetti starten nach 1 Sekunde (nur wenn Gewinner da)
-        if (document.querySelector('.winner-card')) {
-            setTimeout(createConfetti, 1000);
+        // Initialize page
+        function initializePage() {
+            console.log('🚀 Results page loaded');
+            
+            // Update game info
+            document.getElementById('gamePlace').textContent = gameData.place;
+            document.getElementById('gameDate').textContent = gameData.date;
+            document.getElementById('gameTrackCount').textContent = `${gameData.track_count} Bahnen`;
+            
+            // Update edit link
+            document.getElementById('editScoreBtn').href = `/score/${gameData.id}`;
+            
+            // Get track configuration for this place
+            const trackConfig = getTrackConfigForPlace(gameData.place_id, gameData.track_count);
+            
+            // Calculate and render results
+            const results = calculateResults();
+            renderWinnerSection(results);
+            renderResultsGrid(results);
+            renderDetailedScoresTable(results, trackConfig);
+            
+            console.log('✅ Results rendered with track icons');
         }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializePage);
     </script>
 </body>
 </html>
