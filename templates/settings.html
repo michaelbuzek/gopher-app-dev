@@ -780,7 +780,7 @@
         let isEditMode = false;
         let currentTrackConfig = []; // Store current track configuration
 
-        // ROBUST MOCK-FIRST DATA LOADING
+        // PERSISTENT MOCK DATA LOADING - FIX FOR EDIT PERSISTENCE
         async function loadData() {
             console.log('🚀 Loading settings data...');
             await Promise.all([
@@ -789,7 +789,6 @@
             ]);
         }
 
-        // PERSISTENT MOCK DATA LOADING
         async function loadPlaces() {
             console.log('📍 Loading places...');
             
@@ -797,9 +796,9 @@
             hideElement('placesGrid');
             hideElement('placesEmpty');
 
-            // ONLY load initial data if places array is empty
+            // ONLY load initial data if places array is empty - FIX FOR PERSISTENCE!
             if (places.length === 0) {
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 places = [
                     {
@@ -842,7 +841,7 @@
             hideElement('trackTypesGrid');
 
             // ALWAYS USE MOCK DATA FIRST - No API calls that can fail
-            await new Promise(resolve => setTimeout(resolve, 300)); // Simulate loading
+            await new Promise(resolve => setTimeout(resolve, 300));
             
             trackTypes = [
                 {
@@ -982,6 +981,7 @@
             console.log('🔧 Opening add place modal...');
             isEditMode = false;
             currentPlaceId = null;
+            currentTrackConfig = []; // Reset track config
             document.getElementById('placeModalTitle').textContent = 'Neuer Minigolf-Platz';
             document.getElementById('placeName').value = '';
             document.getElementById('placeTrackCount').value = '18';
@@ -1024,7 +1024,6 @@
             if (!currentTrackConfig.length || currentTrackConfig.length !== place.track_count) {
                 currentTrackConfig = [];
                 for (let i = 1; i <= place.track_count; i++) {
-                    // Cycle through track types for variety
                     const typeIndex = (i - 1) % trackTypes.length;
                     const trackType = trackTypes[typeIndex];
                     
@@ -1136,7 +1135,7 @@
             }
         }
 
-        // ROBUST FORM HANDLING - NO API CALLS THAT CAN FAIL
+        // ROBUST FORM HANDLING WITH PERSISTENCE FIX
         document.getElementById('placeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1163,7 +1162,7 @@
             try {
                 // ALWAYS USE MOCK RESPONSE - No API calls that can fail
                 console.log('Using mock save response...');
-                await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 300));
                 
                 if (isEditMode && currentPlaceId) {
                     // Update existing place in mock data
@@ -1178,7 +1177,7 @@
                 } else {
                     // Add new place to mock data
                     const newPlace = {
-                        id: Date.now(), // Simple ID generation for mock
+                        id: Date.now(),
                         ...formData,
                         has_custom_config: false
                     };
@@ -1211,13 +1210,15 @@
 
             try {
                 // ALWAYS USE MOCK RESPONSE - No API calls that can fail
-                await new Promise(resolve => setTimeout(resolve, 200)); // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 200));
                 
                 // Remove from mock data
+                const oldLength = places.length;
                 places = places.filter(p => p.id !== placeId);
-                renderPlaces(); // Re-render with updated data
+                console.log(`✅ Place deleted (Mock): ${oldLength} -> ${places.length} places`);
+                
+                renderPlaces(); // Re-render with updated data - DON'T call loadPlaces()!
                 showMessage('Platz erfolgreich gelöscht! (Mock)', 'success');
-                console.log('✅ Place deleted (Mock)');
 
             } catch (error) {
                 console.error('❌ Fehler beim Löschen:', error);
@@ -1248,7 +1249,6 @@
             const messageArea = document.getElementById('messageArea');
             messageArea.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
             
-            // Auto-hide success messages after 5 seconds
             if (type === 'success') {
                 setTimeout(clearMessage, 5000);
             }
@@ -1285,7 +1285,6 @@
             if (isEditMode && currentPlaceId) {
                 // Reset track config when track count changes
                 currentTrackConfig = [];
-                // Re-load track configuration if track count changes
                 setTimeout(() => {
                     loadTrackConfiguration(currentPlaceId);
                 }, 100);
@@ -1294,7 +1293,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Settings page loaded - MOCK VERSION');
+            console.log('🚀 Settings page loaded - MOCK VERSION WITH PERSISTENCE FIX');
             loadData();
         });
     </script>
