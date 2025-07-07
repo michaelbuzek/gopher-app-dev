@@ -64,12 +64,102 @@ def log_action(action, details=""):
 # Database Models
 # ------------------------------
 
+class Place(db.Model):
+    """Minigolf-Plätze mit track configuration"""
+    __tablename__ = 'places'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    track_count = db.Column(db.Integer, nullable=False, default=18)
+    is_default = db.Column(db.Boolean, default=False)  # Für "Bülach" Standard
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    games = db.relationship('Game', backref='place_config', lazy=True)
+    place_tracks = db.relationship('PlaceTrack', backref='place', cascade="all, delete-orphan", lazy=True)
+    
+    def __repr__(self):
+        return f'<Place {self.id}: {self.name} ({self.track_count} tracks)>'
+    
+    def get_track_config(self):
+        """Returns dict {track_number: track_type} für diesen Platz"""
+        config = {}
+        for pt in self.place_tracks:
+            config[pt.track_number] = pt.track_type
+        return config
+    
+    def setup_default_tracks(self):
+        """Creates default track configuration für neuen Platz"""
+        # Standard Track Type (wenn noch keine spezifische config)
+        default_track_type = TrackType.query.filter_by(is_default=True).first()
+        if not default_track_type:
+            # Fallback: ersten verfügbaren Track Type nehmen
+            default_track_type = TrackType.query.first()
+        
+        if default_track_type:
+            for track_num in range(1, self.track_count + 1):
+                # Nur erstellen wenn noch nicht existiert
+                existing = PlaceTrack.query.filter_by(place=self, track_number=track_num).first()
+                if not existing:
+                    place_track = PlaceTrack(
+                        place=self, 
+                        track_number=track_num, 
+                        track_type=default_track_type
+                    )
+                    db.session.add(place_track)
+
+
+class TrackType(db.Model):
+    """Bibliothek von Bahn-Typen (Standard Icons)"""
+    __tablename__ = 'track_types'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    description = db.Column(db.String(200))
+    icon_filename = db.Column(db.String(100), nullable=False)  # z.B. "bahn_1.png"
+    is_default = db.Column(db.Boolean, default=False)  # Standard Track Type
+    is_placeholder = db.Column(db.Boolean, default=False)  # Platzhalter für unbekannte
+    sort_order = db.Column(db.Integer, default=0)  # Reihenfolge in Dropdown
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    place_tracks = db.relationship('PlaceTrack', backref='track_type', lazy=True)
+    
+    def __repr__(self):
+        return f'<TrackType {self.id}: {self.name}>'
+    
+    @property
+    def icon_url(self):
+        """Returns full path to icon"""
+        return f'/static/track-icons/{self.icon_filename}'
+
+
+class PlaceTrack(db.Model):
+    """Association Table: Welcher Track-Type für welche Bahn an welchem Platz"""
+    __tablename__ = 'place_tracks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    place_id = db.Column(db.Integer, db.ForeignKey('places.id'), nullable=False)
+    track_number = db.Column(db.Integer, nullable=False)  # Bahn 1, 2, 3, etc.
+    track_type_id = db.Column(db.Integer, db.ForeignKey('track_types.id'), nullable=False)
+    
+    # Composite index für Performance & Eindeutigkeit
+    __table_args__ = (
+        db.Index('idx_place_track_number', 'place_id', 'track_number'),
+        db.UniqueConstraint('place_id', 'track_number', name='uq_place_track_number')
+    )
+    
+    def __repr__(self):
+        return f'<PlaceTrack {self.place.name} Track {self.track_number}: {self.track_type.name}>'
+
+
 class Game(db.Model):
     __tablename__ = 'games'
     
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.String(20), nullable=False)
-    place = db.Column(db.String(100), nullable=False)
+    place = db.Column(db.String(100), nullable=False)  # BEHALTEN für Legacy Games
+    place_id = db.Column(db.Integer, db.ForeignKey('places.id'), nullable=True)  # NEU: Referenz zu Place
     track_count = db.Column(db.Integer, nullable=False, default=18)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -78,6 +168,19 @@ class Game(db.Model):
     
     def __repr__(self):
         return f'<Game {self.id}: {self.place} on {self.date}>'
+    
+    def get_place_name(self):
+        """Returns place name - from Place config or legacy text"""
+        if self.place_config:
+            return self.place_config.name
+        return self.place
+    
+    def get_track_config(self):
+        """Returns track configuration für diese Game"""
+        if self.place_config:
+            return self.place_config.get_track_config()
+        return {}  # Legacy games haben keine track config
+
 
 class Player(db.Model):
     __tablename__ = 'players'
@@ -134,15 +237,77 @@ def check_tables_exist():
     except Exception:
         return False
 
+def initialize_default_data():
+    """Setup default Places & Track Types"""
+    
+    # 1. Standard Track Types erstellen
+    default_track_types = [
+        {'name': 'Standard', 'description': 'Standard Minigolf Bahn', 'icon_filename': 'bahn_standard.png', 'is_default': True, 'sort_order': 1},
+        {'name': 'Kurve Links', 'description': 'Linkskurve', 'icon_filename': 'bahn_kurve_links.png', 'sort_order': 2},
+        {'name': 'Kurve Rechts', 'description': 'Rechtskurve', 'icon_filename': 'bahn_kurve_rechts.png', 'sort_order': 3},
+        {'name': 'Hindernis', 'description': 'Bahn mit Hindernis', 'icon_filename': 'bahn_hindernis.png', 'sort_order': 4},
+        {'name': 'Brücke', 'description': 'Brücken-Bahn', 'icon_filename': 'bahn_bruecke.png', 'sort_order': 5},
+        {'name': 'Unbekannt', 'description': 'Platzhalter für unbekannte Bahn-Typen', 'icon_filename': 'bahn_placeholder.png', 'is_placeholder': True, 'sort_order': 99},
+    ]
+    
+    for tt_data in default_track_types:
+        existing = TrackType.query.filter_by(name=tt_data['name']).first()
+        if not existing:
+            track_type = TrackType(**tt_data)
+            db.session.add(track_type)
+    
+    # 2. Standard Place "Bülach" erstellen
+    bulach = Place.query.filter_by(name='Bülach').first()
+    if not bulach:
+        bulach = Place(name='Bülach', track_count=18, is_default=True)
+        db.session.add(bulach)
+        db.session.flush()  # Get ID
+        
+        # Standard track configuration für Bülach
+        bulach.setup_default_tracks()
+    
+    db.session.commit()
+    log_action("Default Places & Track Types initialized")
+
+
+def migrate_legacy_games():
+    """Convert legacy games to use Place references"""
+    legacy_games = Game.query.filter(Game.place_id == None).all()
+    
+    for game in legacy_games:
+        # Versuche existing Place zu finden
+        existing_place = Place.query.filter_by(name=game.place).first()
+        
+        if not existing_place:
+            # Erstelle neuen Place für diesen legacy game
+            new_place = Place(name=game.place, track_count=game.track_count)
+            db.session.add(new_place)
+            db.session.flush()  # Get ID
+            new_place.setup_default_tracks()
+            game.place_id = new_place.id
+        else:
+            game.place_id = existing_place.id
+    
+    db.session.commit()
+    log_action(f"Migrated {len(legacy_games)} legacy games to Place references")
+
+
 def safe_database_init():
-    """Safely initialize database tables"""
+    """Updated database initialization"""
     try:
         if not check_database_connection():
             raise Exception("Database connection failed")
         
-        # Create all tables (only creates missing ones)
+        # Create all tables (including new ones)
         db.create_all()
-        log_action("Database tables created successfully")
+        
+        # Initialize default data
+        initialize_default_data()
+        
+        # Migrate legacy games (if any)
+        migrate_legacy_games()
+        
+        log_action("Database tables and default data initialized successfully")
         return True
         
     except Exception as e:
@@ -330,7 +495,7 @@ def index():
 
 @app.route('/save', methods=['POST'])
 def save():
-    """Save new game with players and initial scores"""
+    """Save new game with places support - UPDATED VERSION"""
     try:
         data = request.get_json()
         
@@ -343,19 +508,39 @@ def save():
             if not data.get(field):
                 return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
         
+        place_name = data.get('place').strip()
+        track_count = data.get('track_count', 18)
+        
+        # Find or create place
+        place = Place.query.filter_by(name=place_name).first()
+        place_id = None
+        
+        if place:
+            place_id = place.id
+            # Use place's track count if provided
+            track_count = place.track_count
+        else:
+            # Create new place on-the-fly
+            new_place = Place(name=place_name, track_count=track_count)
+            db.session.add(new_place)
+            db.session.flush()  # Get ID
+            new_place.setup_default_tracks()
+            place_id = new_place.id
+            log_action(f"Auto-created place: {place_name}")
+        
         # Create game
         game = Game(
             date=data.get('date'),
-            place=data.get('place'),
-            track_count=data.get('track_count', 18)
+            place=place_name,  # Keep for compatibility
+            place_id=place_id,  # NEW: Reference to Place
+            track_count=track_count
         )
         
         db.session.add(game)
         db.session.flush()  # Get game.id
         
-        # Create players and scores
+        # Create players and scores (same as before)
         players_data = data.get('players', [])
-        track_count = game.track_count
         
         for player_data in players_data:
             if not player_data.get('name', '').strip():
@@ -373,11 +558,12 @@ def save():
         
         db.session.commit()
         
-        log_action(f"Game created: {game.place} ({len(players_data)} players, {track_count} tracks)")
+        log_action(f"Game created: {place_name} ({len(players_data)} players, {track_count} tracks)")
         
         return jsonify({
             'status': 'success', 
             'game_id': game.id,
+            'place_id': place_id,
             'message': f'Game created successfully with {len(players_data)} players'
         })
     
@@ -551,6 +737,96 @@ def game_results(game_id):
     except Exception as e:
         logger.error(f"❌ Results error: {str(e)}")
         return f"<h1>Error</h1><p>Game not found or error loading results.</p>", 404
+
+# ------------------------------
+# TEMPORARY API Endpoints (Quick Fix)
+# ------------------------------
+
+@app.route('/api/places', methods=['GET'])
+def get_places_temp():
+    """Temporary places API mit fake data"""
+    try:
+        # Fake data für jetzt
+        fake_places = [
+            {
+                'id': 1,
+                'name': 'Bülach',
+                'track_count': 18,
+                'is_default': True,
+                'has_custom_config': False
+            },
+            {
+                'id': 2, 
+                'name': 'Adventure Golf Bern',
+                'track_count': 12,
+                'is_default': False,
+                'has_custom_config': False
+            }
+        ]
+        
+        return jsonify({
+            'status': 'success',
+            'places': fake_places
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Get places error: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Failed to load places'}), 500
+
+@app.route('/api/track-types', methods=['GET'])  
+def get_track_types_temp():
+    """Temporary track types API mit fake data"""
+    try:
+        # Fake data für jetzt
+        fake_track_types = [
+            {
+                'id': 1,
+                'name': 'Standard',
+                'description': 'Standard gerade Bahn',
+                'icon_url': '/static/track-icons/bahn_standard.png',
+                'icon_filename': 'bahn_standard.png',
+                'is_default': True,
+                'is_placeholder': False
+            },
+            {
+                'id': 2,
+                'name': 'Kurve Links', 
+                'description': 'Linkskurve',
+                'icon_url': '/static/track-icons/bahn_kurve_links.png',
+                'icon_filename': 'bahn_kurve_links.png',
+                'is_default': False,
+                'is_placeholder': False
+            },
+            {
+                'id': 99,
+                'name': 'Unbekannt',
+                'description': 'Platzhalter für unbekannte Bahnen',
+                'icon_url': '/static/track-icons/bahn_placeholder.png', 
+                'icon_filename': 'bahn_placeholder.png',
+                'is_default': False,
+                'is_placeholder': True
+            }
+        ]
+        
+        return jsonify({
+            'status': 'success',
+            'track_types': fake_track_types
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Get track types error: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Failed to load track types'}), 500
+
+@app.route('/settings')
+def settings_temp():
+    """Temporary settings page"""
+    try:
+        # Für jetzt einfach die template rendern ohne echte Daten
+        return render_template('settings.html')
+        
+    except Exception as e:
+        logger.error(f"❌ Settings page error: {str(e)}")
+        return f"<h1>Settings</h1><p>Settings page in development. Database models needed first.</p>", 200
 
 # ------------------------------
 # Error Handlers
