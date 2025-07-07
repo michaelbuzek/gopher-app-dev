@@ -123,6 +123,17 @@ def check_database_connection():
         logger.error(f"❌ Database connection failed: {str(e)}")
         return False
 
+def check_tables_exist():
+    """Check if all required tables exist"""
+    try:
+        # Try to query each table
+        db.session.execute(text('SELECT 1 FROM games LIMIT 1'))
+        db.session.execute(text('SELECT 1 FROM players LIMIT 1'))
+        db.session.execute(text('SELECT 1 FROM scores LIMIT 1'))
+        return True
+    except Exception:
+        return False
+
 def safe_database_init():
     """Safely initialize database tables"""
     try:
@@ -131,12 +142,50 @@ def safe_database_init():
         
         # Create all tables (only creates missing ones)
         db.create_all()
-        log_action("Database initialized successfully")
+        log_action("Database tables created successfully")
         return True
         
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {str(e)}")
         return False
+
+# ------------------------------
+# AUTOMATIC DATABASE INITIALIZATION
+# ------------------------------
+
+@app.before_request
+def ensure_database():
+    """Automatically ensure database tables exist before each request"""
+    # Skip for static files and health checks
+    if request.endpoint in ['static', 'health_check']:
+        return
+    
+    # Only check once per app instance
+    if not hasattr(app, '_database_checked'):
+        try:
+            log_action("Checking database tables...")
+            
+            if check_database_connection():
+                if not check_tables_exist():
+                    log_action("Tables missing - creating automatically")
+                    success = safe_database_init()
+                    if success:
+                        log_action("✅ Database auto-initialization successful")
+                    else:
+                        logger.error("❌ Database auto-initialization failed")
+                else:
+                    log_action("✅ Database tables verified")
+                
+                app._database_checked = True
+            else:
+                logger.error("❌ Database connection failed during auto-check")
+                
+        except Exception as e:
+            logger.error(f"❌ Database auto-check error: {str(e)}")
+
+# ------------------------------
+# Health Check & Manual Init Routes
+# ------------------------------
 
 @app.route('/health')
 def health_check():
@@ -144,19 +193,22 @@ def health_check():
     try:
         # Check database connection
         db_status = check_database_connection()
+        tables_exist = check_tables_exist() if db_status else False
         
         # Get basic stats
-        game_count = Game.query.count() if db_status else 0
+        game_count = Game.query.count() if db_status and tables_exist else 0
         
         status = {
-            'status': 'healthy' if db_status else 'unhealthy',
+            'status': 'healthy' if (db_status and tables_exist) else 'unhealthy',
             'environment': get_environment(),
             'database': 'connected' if db_status else 'disconnected',
+            'tables': 'exist' if tables_exist else 'missing',
             'games_count': game_count,
+            'auto_init': 'enabled',
             'timestamp': datetime.utcnow().isoformat()
         }
         
-        return jsonify(status), 200 if db_status else 503
+        return jsonify(status), 200 if (db_status and tables_exist) else 503
         
     except Exception as e:
         logger.error(f"❌ Health check failed: {str(e)}")
@@ -164,22 +216,22 @@ def health_check():
 
 @app.route('/initdb')
 def initdb():
-    """Initialize database - environment aware and safe"""
+    """Manual database initialization - now mostly for debugging"""
     try:
         if is_development():
             # Development: Allow optional reset
             reset_requested = request.args.get('reset', '').lower() == 'true'
             
             if reset_requested:
-                log_action("Resetting database (development only)")
+                log_action("Manual database reset (development only)")
                 db.drop_all()
                 
             success = safe_database_init()
             
             if success:
                 action = "reset and created" if reset_requested else "initialized"
-                log_action(f"Database {action}")
-                return f"✅ Development: Database {action} successfully."
+                log_action(f"Manual database {action}")
+                return f"✅ Development: Database {action} successfully.<br><small>Note: Auto-initialization is now enabled!</small>"
             else:
                 return "❌ Database initialization failed.", 500
                 
@@ -188,19 +240,19 @@ def initdb():
             success = safe_database_init()
             
             if success:
-                log_action("Database safely initialized")
-                return "✅ Production: Database safely initialized (no data lost)."
+                log_action("Manual database initialization")
+                return "✅ Production: Database safely initialized.<br><small>Note: This should happen automatically now!</small>"
             else:
                 return "❌ Database initialization failed.", 500
                 
     except Exception as e:
-        logger.error(f"❌ Database init error: {str(e)}")
+        logger.error(f"❌ Manual database init error: {str(e)}")
         return f"<h1>Database Error</h1><p>{str(e)}</p>", 500
 
 @app.route('/reset-dev-db')
 def reset_dev_db():
     """Development only: Force reset database"""
-    if not is_development():
+    if not is_production():
         log_action("Unauthorized reset attempt blocked")
         return jsonify({'error': 'Only available in development environment'}), 403
     
@@ -208,6 +260,10 @@ def reset_dev_db():
         log_action("Performing complete database reset")
         db.drop_all()
         success = safe_database_init()
+        
+        # Reset the check flag so auto-init runs again
+        if hasattr(app, '_database_checked'):
+            delattr(app, '_database_checked')
         
         if success:
             log_action("Database reset completed")
@@ -225,6 +281,7 @@ def db_info():
     try:
         # Connection test
         db_connected = check_database_connection()
+        tables_exist = check_tables_exist() if db_connected else False
         
         if not db_connected:
             return jsonify({'error': 'Database not connected'}), 503
@@ -234,24 +291,27 @@ def db_info():
             'environment': get_environment(),
             'database_type': 'PostgreSQL' if 'postgresql://' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite',
             'connection_status': 'connected',
+            'tables_status': 'exist' if tables_exist else 'missing',
+            'auto_initialization': 'enabled',
             'tables': {
-                'games': Game.query.count(),
-                'players': Player.query.count(),
-                'scores': Score.query.count()
-            },
+                'games': Game.query.count() if tables_exist else 0,
+                'players': Player.query.count() if tables_exist else 0,
+                'scores': Score.query.count() if tables_exist else 0
+            } if tables_exist else 'tables_missing',
             'latest_game': None,
             'timestamp': datetime.utcnow().isoformat()
         }
         
         # Get latest game info
-        latest_game = Game.query.order_by(Game.id.desc()).first()
-        if latest_game:
-            stats['latest_game'] = {
-                'id': latest_game.id,
-                'place': latest_game.place,
-                'date': latest_game.date,
-                'players': len(latest_game.players)
-            }
+        if tables_exist:
+            latest_game = Game.query.order_by(Game.id.desc()).first()
+            if latest_game:
+                stats['latest_game'] = {
+                    'id': latest_game.id,
+                    'place': latest_game.place,
+                    'date': latest_game.date,
+                    'players': len(latest_game.players)
+                }
         
         return jsonify(stats)
         
@@ -509,38 +569,52 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 # ------------------------------
-# Application Startup
+# Application Startup & Initialization
 # ------------------------------
 
 def initialize_app():
     """Initialize the application on startup"""
     try:
-        log_action("Application starting up")
+        log_action("🚀 Gopher Minigolf App initializing")
         
-        # Test database connection and initialize
+        # Test database connection
         if check_database_connection():
-            safe_database_init()
-            log_action("Application ready")
-        else:
-            logger.error("❌ Failed to connect to database on startup")
+            log_action("Database connection successful")
             
+            # Check and create tables if needed
+            if not check_tables_exist():
+                log_action("Creating database tables on startup")
+                success = safe_database_init()
+                if success:
+                    log_action("✅ Startup database initialization successful")
+                else:
+                    logger.error("❌ Startup database initialization failed")
+            else:
+                log_action("Database tables already exist")
+        else:
+            logger.error("❌ Database connection failed on startup")
+            
+        log_action("✅ Application initialization complete")
+        
     except Exception as e:
-        logger.error(f"❌ Startup error: {str(e)}")
+        logger.error(f"❌ Application initialization error: {str(e)}")
+
+# Initialize app when module is imported (works with Gunicorn)
+with app.app_context():
+    initialize_app()
 
 if __name__ == '__main__':
-    with app.app_context():
-        initialize_app()
-    
-    # Configure for Render.com
+    # Configure for local development or manual run
     port = int(os.environ.get('PORT', 5001))
     debug = is_development()
     
-    startup_msg = f"Starting Gopher Minigolf App"
+    startup_msg = f"🏌️ Starting Gopher Minigolf App"
     if is_production():
         startup_msg += f" in PRODUCTION mode on port {port} 🛡️"
     else:
         startup_msg += f" in DEVELOPMENT mode on port {port} 🔧"
     
     logger.info(startup_msg)
+    logger.info("📋 Auto-initialization is ENABLED - no manual /initdb needed!")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
