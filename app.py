@@ -31,18 +31,26 @@ def get_database_url():
         logger.info("🐘 Using PostgreSQL (Render)")
         return database_url
     else:
-        logger.info("🗄️ Using SQLite (Local)")
-        return 'sqlite:///gopher.db'
+        # Local development
+        local_db_path = os.path.join(os.path.dirname(__file__), 'gopher.db')
+        logger.info(f"🗄️ Using SQLite (Local): {local_db_path}")
+        return f'sqlite:///{local_db_path}'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,  # Handle database disconnections
     'pool_recycle': 300,    # Recycle connections every 5 minutes
+    'pool_timeout': 20,     # Render.com optimization
+    'max_overflow': 0,      # Render.com optimization
 }
+
+# Secret key for sessions
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gopher-dev-key-12345')
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
 # ------------------------------
 # Environment Helper Functions
 # ------------------------------
@@ -237,6 +245,9 @@ def check_tables_exist():
         db.session.execute(text('SELECT 1 FROM games LIMIT 1'))
         db.session.execute(text('SELECT 1 FROM players LIMIT 1'))
         db.session.execute(text('SELECT 1 FROM scores LIMIT 1'))
+        db.session.execute(text('SELECT 1 FROM places LIMIT 1'))
+        db.session.execute(text('SELECT 1 FROM track_types LIMIT 1'))
+        db.session.execute(text('SELECT 1 FROM place_tracks LIMIT 1'))
         return True
     except Exception:
         return False
@@ -246,11 +257,14 @@ def initialize_default_data():
     
     # 1. Standard Track Types erstellen
     default_track_types = [
-        {'name': 'Standard', 'description': 'Standard Minigolf Bahn', 'icon_filename': 'bahn_standard.png', 'is_default': True, 'sort_order': 1},
+        {'name': 'Standard', 'description': 'Standard Minigolf Bahn', 'icon_filename': 'bahn_placeholder.png', 'is_default': True, 'sort_order': 1},
         {'name': 'Kurve Links', 'description': 'Linkskurve', 'icon_filename': 'bahn_kurve_links.png', 'sort_order': 2},
         {'name': 'Kurve Rechts', 'description': 'Rechtskurve', 'icon_filename': 'bahn_kurve_rechts.png', 'sort_order': 3},
         {'name': 'Hindernis', 'description': 'Bahn mit Hindernis', 'icon_filename': 'bahn_hindernis.png', 'sort_order': 4},
         {'name': 'Brücke', 'description': 'Brücken-Bahn', 'icon_filename': 'bahn_bruecke.png', 'sort_order': 5},
+        {'name': 'Windmühle', 'description': 'Bahn mit Windmühle', 'icon_filename': 'windmill.png', 'sort_order': 6},
+        {'name': 'Rampe', 'description': 'Rampen-Bahn', 'icon_filename': 'ramp.png', 'sort_order': 7},
+        {'name': 'Tunnel', 'description': 'Tunnel-Bahn', 'icon_filename': 'tunnel.png', 'sort_order': 8},
         {'name': 'Unbekannt', 'description': 'Platzhalter für unbekannte Bahn-Typen', 'icon_filename': 'bahn_placeholder.png', 'is_placeholder': True, 'sort_order': 99},
     ]
     
@@ -269,6 +283,21 @@ def initialize_default_data():
         
         # Standard track configuration für Bülach
         bulach.setup_default_tracks()
+    
+    # 3. Weitere Standard Places
+    standard_places = [
+        {'name': 'Zürich Minigolf', 'track_count': 18, 'is_default': True},
+        {'name': 'Winterthur Adventure Golf', 'track_count': 14, 'is_default': False},
+        {'name': 'Rapperswil Minigolf', 'track_count': 18, 'is_default': False},
+    ]
+    
+    for place_data in standard_places:
+        existing = Place.query.filter_by(name=place_data['name']).first()
+        if not existing:
+            new_place = Place(**place_data)
+            db.session.add(new_place)
+            db.session.flush()
+            new_place.setup_default_tracks()
     
     db.session.commit()
     log_action("Default Places & Track Types initialized")
@@ -366,6 +395,7 @@ def health_check():
         
         # Get basic stats
         game_count = Game.query.count() if db_status and tables_exist else 0
+        place_count = Place.query.count() if db_status and tables_exist else 0
         
         status = {
             'status': 'healthy' if (db_status and tables_exist) else 'unhealthy',
@@ -373,6 +403,7 @@ def health_check():
             'database': 'connected' if db_status else 'disconnected',
             'tables': 'exist' if tables_exist else 'missing',
             'games_count': game_count,
+            'places_count': place_count,
             'auto_init': 'enabled',
             'timestamp': datetime.utcnow().isoformat()
         }
@@ -421,7 +452,7 @@ def initdb():
 @app.route('/reset-dev-db')
 def reset_dev_db():
     """Development only: Force reset database"""
-    if not is_production():
+    if is_production():
         log_action("Unauthorized reset attempt blocked")
         return jsonify({'error': 'Only available in development environment'}), 403
     
@@ -465,7 +496,10 @@ def db_info():
             'tables': {
                 'games': Game.query.count() if tables_exist else 0,
                 'players': Player.query.count() if tables_exist else 0,
-                'scores': Score.query.count() if tables_exist else 0
+                'scores': Score.query.count() if tables_exist else 0,
+                'places': Place.query.count() if tables_exist else 0,
+                'track_types': TrackType.query.count() if tables_exist else 0,
+                'place_tracks': PlaceTrack.query.count() if tables_exist else 0
             } if tables_exist else 'tables_missing',
             'latest_game': None,
             'timestamp': datetime.utcnow().isoformat()
@@ -659,20 +693,41 @@ def update_score():
 
 @app.route('/history')
 def history():
-    """Game history page"""
+    """Game history page with track icons support"""
     try:
         games = Game.query.order_by(Game.id.desc()).all()
         
         # Prepare games data for template
         games_data = []
         for game in games:
+            # Get track icons for this game
+            track_icons = {}
+            has_track_config = False
+            
+            if game.place_config and game.place_config.place_tracks:
+                has_track_config = True
+                place_track_map = {pt.track_number: pt for pt in game.place_config.place_tracks}
+                
+                for track_num in range(1, game.track_count + 1):
+                    if track_num in place_track_map:
+                        track_icons[track_num] = place_track_map[track_num].track_type.icon_url
+                    else:
+                        track_icons[track_num] = '/static/track-icons/bahn_placeholder.png'
+            else:
+                # Default icons for legacy games
+                for track_num in range(1, game.track_count + 1):
+                    track_icons[track_num] = '/static/track-icons/bahn_placeholder.png'
+            
             game_data = {
                 'id': game.id,
                 'date': game.date,
                 'place': game.place,
+                'place_id': game.place_id,
                 'track_count': game.track_count,
                 'players': [{'name': p.name, 'total': p.get_total_score()} for p in game.players],
-                'player_count': len(game.players)
+                'player_count': len(game.players),
+                'has_track_config': has_track_config,
+                'track_icons': track_icons
             }
             games_data.append(game_data)
         
@@ -743,34 +798,28 @@ def game_results(game_id):
         return f"<h1>Error</h1><p>Game not found or error loading results.</p>", 404
 
 # ------------------------------
-# TEMPORARY API Endpoints (Quick Fix)
+# API ENDPOINTS (UPDATED - NO MORE "TEMP")
 # ------------------------------
 
 @app.route('/api/places', methods=['GET'])
-def get_places_temp():
-    """Temporary places API mit fake data"""
+def get_places():
+    """Real places API for autocomplete"""
     try:
-        # Fake data für jetzt
-        fake_places = [
-            {
-                'id': 1,
-                'name': 'Bülach',
-                'track_count': 18,
-                'is_default': True,
-                'has_custom_config': False
-            },
-            {
-                'id': 2, 
-                'name': 'Adventure Golf Bern',
-                'track_count': 12,
-                'is_default': False,
-                'has_custom_config': False
-            }
-        ]
+        places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
+        places_data = []
+        
+        for place in places:
+            places_data.append({
+                'id': place.id,
+                'name': place.name,
+                'track_count': place.track_count,
+                'is_default': place.is_default,
+                'has_custom_config': len(place.place_tracks) > 0
+            })
         
         return jsonify({
             'status': 'success',
-            'places': fake_places
+            'places': places_data
         })
         
     except Exception as e:
@@ -778,59 +827,104 @@ def get_places_temp():
         return jsonify({'status': 'error', 'message': 'Failed to load places'}), 500
 
 @app.route('/api/track-types', methods=['GET'])  
-def get_track_types_temp():
-    """Temporary track types API mit fake data"""
+def get_track_types():
+    """Real track types API"""
     try:
-        # Fake data für jetzt
-        fake_track_types = [
-            {
-                'id': 1,
-                'name': 'Standard',
-                'description': 'Standard gerade Bahn',
-                'icon_url': '/static/track-icons/bahn_standard.png',
-                'icon_filename': 'bahn_standard.png',
-                'is_default': True,
-                'is_placeholder': False
-            },
-            {
-                'id': 2,
-                'name': 'Kurve Links', 
-                'description': 'Linkskurve',
-                'icon_url': '/static/track-icons/bahn_kurve_links.png',
-                'icon_filename': 'bahn_kurve_links.png',
-                'is_default': False,
-                'is_placeholder': False
-            },
-            {
-                'id': 99,
-                'name': 'Unbekannt',
-                'description': 'Platzhalter für unbekannte Bahnen',
-                'icon_url': '/static/track-icons/bahn_placeholder.png', 
-                'icon_filename': 'bahn_placeholder.png',
-                'is_default': False,
-                'is_placeholder': True
-            }
-        ]
+        track_types = TrackType.query.order_by(TrackType.sort_order, TrackType.name).all()
+        track_types_data = []
+        
+        for tt in track_types:
+            track_types_data.append({
+                'id': tt.id,
+                'name': tt.name,
+                'description': tt.description,
+                'icon_url': tt.icon_url,
+                'icon_filename': tt.icon_filename,
+                'is_default': tt.is_default,
+                'is_placeholder': tt.is_placeholder
+            })
         
         return jsonify({
             'status': 'success',
-            'track_types': fake_track_types
+            'track_types': track_types_data
         })
         
     except Exception as e:
         logger.error(f"❌ Get track types error: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Failed to load track types'}), 500
 
-@app.route('/settings')
-def settings_temp():
-    """Temporary settings page"""
+@app.route('/api/places/<int:place_id>/tracks')
+def get_place_track_config(place_id):
+    """Get track configuration for a specific place"""
     try:
-        # Für jetzt einfach die template rendern ohne echte Daten
-        return render_template('settings.html')
+        place = Place.query.get_or_404(place_id)
+        
+        track_config = []
+        place_track_map = {pt.track_number: pt for pt in place.place_tracks}
+        
+        for track_num in range(1, place.track_count + 1):
+            if track_num in place_track_map:
+                pt = place_track_map[track_num]
+                track_config.append({
+                    'track_number': track_num,
+                    'track_type_id': pt.track_type_id,
+                    'track_type_name': pt.track_type.name,
+                    'icon_url': pt.track_type.icon_url
+                })
+            else:
+                # Default fallback
+                default_type = TrackType.query.filter_by(is_default=True).first()
+                track_config.append({
+                    'track_number': track_num,
+                    'track_type_id': default_type.id if default_type else None,
+                    'track_type_name': default_type.name if default_type else 'Standard',
+                    'icon_url': default_type.icon_url if default_type else '/static/track-icons/bahn_placeholder.png'
+                })
+        
+        return jsonify({
+            'status': 'success',
+            'place': {
+                'id': place.id,
+                'name': place.name,
+                'track_count': place.track_count
+            },
+            'track_config': track_config
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Get place track config error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/status')
+def api_status():
+    """API status endpoint"""
+    return health_check()
+
+@app.route('/settings')
+def settings():
+    """Settings page with real data"""
+    try:
+        # Get current statistics
+        stats = {
+            'places_count': Place.query.count(),
+            'track_types_count': TrackType.query.count(),
+            'games_count': Game.query.count(),
+            'players_count': Player.query.count(),
+            'scores_count': Score.query.count()
+        }
+        
+        # Get places and track types for settings
+        places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
+        track_types = TrackType.query.order_by(TrackType.sort_order).all()
+        
+        return render_template('settings.html', 
+                             stats=stats, 
+                             places=places, 
+                             track_types=track_types)
         
     except Exception as e:
         logger.error(f"❌ Settings page error: {str(e)}")
-        return f"<h1>Settings</h1><p>Settings page in development. Database models needed first.</p>", 200
+        return f"<h1>Settings</h1><p>Error loading settings: {str(e)}</p>", 500
 
 # ------------------------------
 # Error Handlers
@@ -847,6 +941,19 @@ def internal_error(error):
     db.session.rollback()
     logger.error(f"❌ Internal server error: {str(error)}")
     return render_template('500.html'), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle unexpected exceptions in production"""
+    logger.error(f"❌ Unhandled exception: {str(e)}")
+    
+    if is_development():
+        # In development, show full error
+        raise e
+    else:
+        # In production, show generic error page
+        db.session.rollback()
+        return f"<h1>🏌️ Gopher Minigolf</h1><p>Something went wrong. Please try again.</p>", 500
 
 # ------------------------------
 # Application Startup & Initialization
@@ -881,7 +988,10 @@ def initialize_app():
 
 # Initialize app when module is imported (works with Gunicorn)
 with app.app_context():
-    initialize_app()
+    try:
+        initialize_app()
+    except Exception as e:
+        logger.error(f"⚠️ App context initialization warning: {e}")
 
 if __name__ == '__main__':
     # Configure for local development or manual run
@@ -897,4 +1007,17 @@ if __name__ == '__main__':
     logger.info(startup_msg)
     logger.info("📋 Auto-initialization is ENABLED - no manual /initdb needed!")
     
+    # Render.com uses PORT environment variable
     app.run(host='0.0.0.0', port=port, debug=debug)
+else:
+    # When run via Gunicorn (Render.com)
+    logger.info("🚀 Starting via Gunicorn for Render.com")
+    
+    # Ensure database is initialized for Gunicorn
+    try:
+        with app.app_context():
+            if not check_tables_exist():
+                logger.info("🔧 Gunicorn startup: Creating tables")
+                safe_database_init()
+    except Exception as e:
+        logger.error(f"❌ Gunicorn startup error: {e}")
