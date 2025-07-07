@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>⚙️ Settings - Gopher Minigolf</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f7f4f1 0%, #ede8e3 100%);
+            min-height: 100vh;
+            color: #2d3748;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background: #3b5c6c;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            position: relative;
+        }
+
+        .gopher-logo {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            padding: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 101;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gopher-logo:hover {
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        .gopher-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        .gopher-fallback {
+            font-size: 1.8em;
+            display: none;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        .nav {
+            background: #ffffff;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+            border-bottom: 3px solid transparent;
+            font-size: 0.9em;
+        }
+
+        .nav-link:hover {
+            background: #f8fafc;
+            color: #f8c098;
+        }
+
+        .nav-link.active {
+            background: #f8fafc;
+            color: #f8c098;
+            border-bottom-color: #f8c098;
+        }
+
+        .content {
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        .section {
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #3b5c6c;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .place-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .place-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #f8c098;
+        }
+
+        .place-card.default {
+            border: 2px solid #f8c098;
+            background: #fef7ed;
+        }
+
+        .place-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .place-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .default-badge {
+            background: #f8c098;
+            color: #2d3748;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .place-info {
+            color: #64748b;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .place-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-primary {
+            background: #f8c098;
+            color: #2d3748;
+        }
+
+        .btn-primary:hover {
+            background: #f2bc91;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .add-place-btn {
+            background: #f8c098;
+            color: #2d3748;
+            border: 2px solid #f2bc91;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+
+        .add-place-btn:hover {
+            background: #f2bc91;
+            transform: translateY(-1px);
+        }
+
+        /* Track Types Section */
+        .track-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .track-type-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .track-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .track-type-card.placeholder {
+            border: 2px dashed #cbd5e1;
+            opacity: 0.7;
+        }
+
+        .track-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .track-type-name {
+            font-weight: 600;
+            color: #3b5c6c;
+            margin-bottom: 5px;
+        }
+
+        .track-type-desc {
+            color: #64748b;
+            font-size: 0.8em;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #3b5c6c;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #f8c098;
+            box-shadow: 0 0 0 3px rgba(248, 192, 152, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* Track Editor Styles */
+        .track-editor {
+            margin-top: 20px;
+        }
+
+        .track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .track-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .track-item:hover {
+            border-color: #f8c098;
+            transform: scale(1.02);
+        }
+
+        .track-item.active {
+            border-color: #f8c098;
+            background: #fef7ed;
+        }
+
+        .track-number {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .track-icon-small {
+            width: 30px;
+            height: 30px;
+            margin: 0 auto;
+            background: #f1f5f9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+        }
+
+        /* Mobile Optimierung */
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+
+            .places-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .track-types-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .track-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            .modal {
+                padding: 20px;
+                margin: 20px;
+            }
+
+            .nav {
+                font-size: 0.8em;
+            }
+
+            .nav-link {
+                padding: 10px 15px;
+            }
+
+            .gopher-logo {
+                width: 40px;
+                height: 40px;
+                top: 12px;
+                left: 12px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Gopher Logo - Home Link -->
+            <a href="/" class="gopher-logo" title="Zurück zur Startseite">
+                <img src="/static/gopher_main.png" 
+                     alt="🐿️ Gopher Home" 
+                     onerror="this.style.display='none'; this.parentNode.querySelector('.gopher-fallback').style.display='block';">
+                <div class="gopher-fallback">🐿️</div>
+            </a>
+            
+            <h1>⚙️ Einstellungen</h1>
+            <p>Minigolf-Plätze und Bahn-Typen verwalten</p>
+        </div>
+
+        <div class="nav">
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/history" class="nav-link">📜 History</a>
+            <a href="/settings" class="nav-link active">⚙️ Settings</a>
+        </div>
+
+        <div class="content">
+            <!-- Places Management Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        📍 Minigolf-Plätze
+                    </div>
+                    <button class="add-place-btn" onclick="openAddPlaceModal()">
+                        ➕ Neuer Platz
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="places-grid" id="placesGrid">
+                        <!-- Places werden hier dynamisch geladen -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track Types Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        🎯 Bahn-Typen Bibliothek
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="color: #64748b; margin-bottom: 15px;">
+                        Diese Icon-Bibliothek wird für alle Minigolf-Plätze verwendet.
+                    </p>
+                    <div class="track-types-grid" id="trackTypesGrid">
+                        <!-- Track Types werden hier dynamisch geladen -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Place Modal -->
+    <div class="modal-overlay" id="placeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="placeModalTitle">Neuer Minigolf-Platz</h3>
+                <button class="modal-close" onclick="closePlaceModal()">&times;</button>
+            </div>
+            
+            <form id="placeForm">
+                <div class="form-group">
+                    <label class="form-label">📍 Platz Name</label>
+                    <input type="text" class="form-input" id="placeName" required placeholder="z.B. Adventure Golf Bern">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⛳ Anzahl Bahnen</label>
+                    <input type="number" class="form-input" id="placeTrackCount" required min="1" max="50" value="18">
+                </div>
+
+                <!-- Track Configuration Editor -->
+                <div class="track-editor" id="trackEditor" style="display: none;">
+                    <label class="form-label">🎯 Bahn-Konfiguration</label>
+                    <p style="color: #64748b; font-size: 0.9em; margin-bottom: 10px;">
+                        Klicke auf eine Bahn um den Typ zu ändern
+                    </p>
+                    <div class="track-grid" id="trackGrid">
+                        <!-- Track configuration wird hier angezeigt -->
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePlaceModal()">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="savePlaceBtn">
+                        💾 Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Track Type Selection Modal -->
+    <div class="modal-overlay" id="trackTypeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="trackTypeModalTitle">Bahn-Typ auswählen</h3>
+                <button class="modal-close" onclick="closeTrackTypeModal()">&times;</button>
+            </div>
+            
+            <div class="track-types-grid" id="trackTypeSelector">
+                <!-- Track type selector wird hier angezeigt -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let places = [];
+        let trackTypes = [];
+        let currentPlaceId = null;
+        let currentTrackNumber = null;
+        let isEditMode = false;
+
+        // Data Loading
+        async function loadData() {
+            try {
+                // Load Places
+                const placesResponse = await fetch('/api/places');
+                const placesData = await placesResponse.json();
+                if (placesData.status === 'success') {
+                    places = placesData.places;
+                    renderPlaces();
+                }
+
+                // Load Track Types
+                const typesResponse = await fetch('/api/track-types');
+                const typesData = await typesResponse.json();
+                if (typesData.status === 'success') {
+                    trackTypes = typesData.track_types;
+                    renderTrackTypes();
+                }
+
+            } catch (error) {
+                console.error('Fehler beim Laden der Daten:', error);
+                alert('Fehler beim Laden der Daten');
+            }
+        }
+
+        // Render Places
+        function renderPlaces() {
+            const grid = document.getElementById('placesGrid');
+            grid.innerHTML = '';
+
+            places.forEach(place => {
+                const placeCard = document.createElement('div');
+                placeCard.className = `place-card ${place.is_default ? 'default' : ''}`;
+                
+                placeCard.innerHTML = `
+                    <div class="place-card-header">
+                        <div class="place-name">${place.name}</div>
+                        ${place.is_default ? '<span class="default-badge">Standard</span>' : ''}
+                    </div>
+                    <div class="place-info">
+                        ⛳ ${place.track_count} Bahnen
+                        ${place.has_custom_config ? '• 🎯 Individuelle Konfiguration' : '• 📋 Standard Konfiguration'}
+                    </div>
+                    <div class="place-actions">
+                        <button class="btn btn-secondary" onclick="editPlace(${place.id})">
+                            ✏️ Bearbeiten
+                        </button>
+                        ${!place.is_default ? `<button class="btn btn-danger" onclick="deletePlace(${place.id}, '${place.name}')">🗑️ Löschen</button>` : ''}
+                    </div>
+                `;
+                
+                grid.appendChild(placeCard);
+            });
+        }
+
+        // Render Track Types
+        function renderTrackTypes() {
+            const grid = document.getElementById('trackTypesGrid');
+            grid.innerHTML = '';
+
+            trackTypes.forEach(type => {
+                const typeCard = document.createElement('div');
+                typeCard.className = `track-type-card ${type.is_placeholder ? 'placeholder' : ''}`;
+                
+                typeCard.innerHTML = `
+                    <div class="track-icon">
+                        <img src="${type.icon_url}" alt="${type.name}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    </div>
+                    <div class="track-type-name">${type.name}</div>
+                    <div class="track-type-desc">${type.description || ''}</div>
+                `;
+                
+                grid.appendChild(typeCard);
+            });
+        }
+
+        // Place Management
+        function openAddPlaceModal() {
+            isEditMode = false;
+            currentPlaceId = null;
+            document.getElementById('placeModalTitle').textContent = 'Neuer Minigolf-Platz';
+            document.getElementById('placeName').value = '';
+            document.getElementById('placeTrackCount').value = '18';
+            document.getElementById('trackEditor').style.display = 'none';
+            document.getElementById('placeModal').classList.add('show');
+        }
+
+        async function editPlace(placeId) {
+            isEditMode = true;
+            currentPlaceId = placeId;
+            
+            const place = places.find(p => p.id === placeId);
+            if (!place) return;
+
+            document.getElementById('placeModalTitle').textContent = `${place.name} bearbeiten`;
+            document.getElementById('placeName').value = place.name;
+            document.getElementById('placeTrackCount').value = place.track_count;
+            
+            // Load track configuration
+            await loadTrackConfiguration(placeId);
+            
+            document.getElementById('trackEditor').style.display = 'block';
+            document.getElementById('placeModal').classList.add('show');
+        }
+
+        async function loadTrackConfiguration(placeId) {
+            try {
+                const response = await fetch(`/api/places/${placeId}/tracks`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    renderTrackConfiguration(data.track_config);
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der Track-Konfiguration:', error);
+            }
+        }
+
+        function renderTrackConfiguration(trackConfig) {
+            const grid = document.getElementById('trackGrid');
+            grid.innerHTML = '';
+
+            trackConfig.forEach(track => {
+                const trackItem = document.createElement('div');
+                trackItem.className = 'track-item';
+                trackItem.onclick = () => selectTrackType(track.track_number);
+                
+                trackItem.innerHTML = `
+                    <div class="track-number">Bahn ${track.track_number}</div>
+                    <div class="track-icon-small">
+                        <img src="${track.track_type_icon}" alt="${track.track_type_name}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    </div>
+                `;
+                
+                grid.appendChild(trackItem);
+            });
+        }
+
+        function selectTrackType(trackNumber) {
+            currentTrackNumber = trackNumber;
+            document.getElementById('trackTypeModalTitle').textContent = `Bahn ${trackNumber} - Typ auswählen`;
+            
+            // Render track type selector
+            const selector = document.getElementById('trackTypeSelector');
+            selector.innerHTML = '';
+
+            trackTypes.forEach(type => {
+                const typeItem = document.createElement('div');
+                typeItem.className = 'track-type-card';
+                typeItem.style.cursor = 'pointer';
+                typeItem.onclick = () => updateTrackType(type.id);
+                
+                typeItem.innerHTML = `
+                    <div class="track-icon">
+                        <img src="${type.icon_url}" alt="${type.name}" 
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">
+                    </div>
+                    <div class="track-type-name">${type.name}</div>
+                `;
+                
+                selector.appendChild(typeItem);
+            });
+
+            document.getElementById('trackTypeModal').classList.add('show');
+        }
+
+        async function updateTrackType(trackTypeId) {
+            if (!currentPlaceId || !currentTrackNumber) return;
+
+            try {
+                const response = await fetch(`/api/places/${currentPlaceId}/tracks/${currentTrackNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        track_type_id: trackTypeId
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    // Reload track configuration
+                    await loadTrackConfiguration(currentPlaceId);
+                    closeTrackTypeModal();
+                } else {
+                    alert('Fehler beim Aktualisieren: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('Fehler beim Aktualisieren des Track-Typs:', error);
+                alert('Fehler beim Aktualisieren');
+            }
+        }
+
+        // Form Handling
+        document.getElementById('placeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('placeName').value.trim(),
+                track_count: parseInt(document.getElementById('placeTrackCount').value)
+            };
+
+            if (!formData.name) {
+                alert('Platz-Name ist erforderlich');
+                return;
+            }
+
+            try {
+                let url = '/api/places';
+                let method = 'POST';
+                
+                if (isEditMode && currentPlaceId) {
+                    url = `/api/places/${currentPlaceId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    closePlaceModal();
+                    await loadData(); // Reload places
+                } else {
+                    alert('Fehler: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('Fehler beim Speichern:', error);
+                alert('Fehler beim Speichern');
+            }
+        });
+
+        async function deletePlace(placeId, placeName) {
+            if (!confirm(`Möchtest du den Platz "${placeName}" wirklich löschen?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/places/${placeId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    await loadData(); // Reload places
+                } else {
+                    alert('Fehler beim Löschen: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('Fehler beim Löschen:', error);
+                alert('Fehler beim Löschen');
+            }
+        }
+
+        // Modal Management
+        function closePlaceModal() {
+            document.getElementById('placeModal').classList.remove('show');
+        }
+
+        function closeTrackTypeModal() {
+            document.getElementById('trackTypeModal').classList.remove('show');
+        }
+
+        // Click outside to close modals
+        document.getElementById('placeModal').addEventListener('click', function(e) {
+            if (e.target === this) closePlaceModal();
+        });
+
+        document.getElementById('trackTypeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeTrackTypeModal();
+        });
+
+        // ESC key to close modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePlaceModal();
+                closeTrackTypeModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+    </script>
+</body>
+</html>
