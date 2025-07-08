@@ -641,7 +641,7 @@
          data-track-count="{{ game.track_count }}"
          style="display: none;"></div>
 
-    <!-- JavaScript für Track Icons (Enhanced) -->
+    <!-- JavaScript für Track Icons (Enhanced & FIXED) -->
     <script>
         // Get game data from HTML data attributes (100% SAFE)
         const gameDataElement = document.getElementById('game-data');
@@ -653,7 +653,7 @@
             track_count: parseInt(gameDataElement.dataset.trackCount)
         };
 
-        // Load track icons for detailed scores table
+        // Load track icons for detailed scores table - FIXED VERSION
         async function loadTrackIcons() {
             console.log('🎯 Loading track icons for game:', gameData.id);
             
@@ -666,11 +666,31 @@
                     if (data.status === 'success') {
                         console.log('✅ Track config loaded:', data.track_config.length, 'tracks');
                         
-                        // Update track icons in table
+                        // Update track icons in table - FIXED SELECTOR
+                        const tableBody = document.querySelector('.scores-table tbody');
+                        if (!tableBody) {
+                            console.warn('⚠️ No table body found');
+                            return;
+                        }
+                        
+                        const trackRows = tableBody.querySelectorAll('tr:not(:last-child)'); // Exclude Total row
+                        console.log(`🔍 Found ${trackRows.length} track rows in table`);
+                        
                         data.track_config.forEach(track => {
-                            const trackCell = document.querySelector(`tr:nth-child(${track.track_number + 1}) .track-icon-table`);
-                            if (trackCell) {
-                                trackCell.innerHTML = `<img src="${track.icon_url}" alt="${track.track_type_name}" onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`;
+                            // Use 0-based index for array access (track_number 1 = index 0)
+                            const rowIndex = track.track_number - 1;
+                            const targetRow = trackRows[rowIndex];
+                            
+                            if (targetRow) {
+                                const trackCell = targetRow.querySelector('.track-icon-table');
+                                if (trackCell) {
+                                    trackCell.innerHTML = `<img src="${track.icon_url}" alt="${track.track_type_name}" onerror="this.style.display='none'; this.parentNode.innerHTML='🎯';">`;
+                                    console.log(`🎯 Updated icon for Bahn ${track.track_number}: ${track.track_type_name}`);
+                                } else {
+                                    console.warn(`⚠️ Could not find track icon cell in row ${rowIndex + 1}`);
+                                }
+                            } else {
+                                console.warn(`⚠️ Could not find row for track ${track.track_number} (index ${rowIndex})`);
                             }
                         });
                         
@@ -704,12 +724,13 @@
             const scoresTable = document.querySelector('.scores-table');
             if (scoresTable) {
                 console.log('📊 Scores table found, loading track icons...');
-                loadTrackIcons();
+                // Small delay to ensure DOM is fully ready
+                setTimeout(loadTrackIcons, 100);
             } else {
                 console.log('📭 No scores table - no track icons needed');
             }
             
-            console.log('✅ Results page fully initialized');
+            console.log('✅ Results page fully initialized with FIXED track icon mapping');
         });
     </script>
 </body>
