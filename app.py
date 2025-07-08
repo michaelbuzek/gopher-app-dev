@@ -424,7 +424,7 @@ def initdb():
             
             if reset_requested:
                 log_action("Manual database reset (development only)")
-                db.drop_all()
+            #    db.drop_all()
                 
             success = safe_database_init()
             
@@ -458,7 +458,7 @@ def reset_dev_db():
     
     try:
         log_action("Performing complete database reset")
-        db.drop_all()
+#        db.drop_all()
         success = safe_database_init()
         
         # Reset the check flag so auto-init runs again
