@@ -253,19 +253,11 @@ def check_tables_exist():
         return False
 
 def initialize_default_data():
-    """Setup default Places & Track Types"""
+    """Setup default Places & Track Types - FIXED VERSION"""
     
-    # 1. Standard Track Types erstellen
+    # 1. Track Types (bleibt gleich)
     default_track_types = [
-        {'name': 'Standard', 'description': 'Standard Minigolf Bahn', 'icon_filename': 'bahn_placeholder.png', 'is_default': True, 'sort_order': 1},
-        {'name': 'Kurve Links', 'description': 'Linkskurve', 'icon_filename': 'bahn_kurve_links.png', 'sort_order': 2},
-        {'name': 'Kurve Rechts', 'description': 'Rechtskurve', 'icon_filename': 'bahn_kurve_rechts.png', 'sort_order': 3},
-        {'name': 'Hindernis', 'description': 'Bahn mit Hindernis', 'icon_filename': 'bahn_hindernis.png', 'sort_order': 4},
-        {'name': 'Brücke', 'description': 'Brücken-Bahn', 'icon_filename': 'bahn_bruecke.png', 'sort_order': 5},
-        {'name': 'Windmühle', 'description': 'Bahn mit Windmühle', 'icon_filename': 'windmill.png', 'sort_order': 6},
-        {'name': 'Rampe', 'description': 'Rampen-Bahn', 'icon_filename': 'ramp.png', 'sort_order': 7},
-        {'name': 'Tunnel', 'description': 'Tunnel-Bahn', 'icon_filename': 'tunnel.png', 'sort_order': 8},
-        {'name': 'Unbekannt', 'description': 'Platzhalter für unbekannte Bahn-Typen', 'icon_filename': 'bahn_placeholder.png', 'is_placeholder': True, 'sort_order': 99},
+        # ... deine track types ...
     ]
     
     for tt_data in default_track_types:
@@ -274,33 +266,33 @@ def initialize_default_data():
             track_type = TrackType(**tt_data)
             db.session.add(track_type)
     
-    # 2. Standard Place "Bülach" erstellen
-    bulach = Place.query.filter_by(name='Bülach').first()
-    if not bulach:
+    # 2. FIXED: Standard Places NUR wenn DB komplett leer!
+    places_count = Place.query.count()
+    
+    if places_count == 0:
+        # NUR bei allererstem Start
+        log_action("🚀 First installation: Creating initial places")
+        
         bulach = Place(name='Bülach', track_count=18, is_default=True)
         db.session.add(bulach)
-        db.session.flush()  # Get ID
-        
-        # Standard track configuration für Bülach
+        db.session.flush()
         bulach.setup_default_tracks()
-    
-    # 3. Weitere Standard Places
-    standard_places = [
-        {'name': 'Zürich Minigolf', 'track_count': 18, 'is_default': True},
-        {'name': 'Winterthur Adventure Golf', 'track_count': 14, 'is_default': False},
-        {'name': 'Rapperswil Minigolf', 'track_count': 18, 'is_default': False},
-    ]
-    
-    for place_data in standard_places:
-        existing = Place.query.filter_by(name=place_data['name']).first()
-        if not existing:
+        
+        # Nur wenige Standard Places
+        initial_places = [
+            {'name': 'Zürich Minigolf', 'track_count': 18, 'is_default': False},
+        ]
+        
+        for place_data in initial_places:
             new_place = Place(**place_data)
             db.session.add(new_place)
             db.session.flush()
             new_place.setup_default_tracks()
+    else:
+        # Places existieren - NICHTS TUN!
+        log_action(f"✅ Places exist ({places_count}) - no changes")
     
     db.session.commit()
-    log_action("Default Places & Track Types initialized")
 
 
 def migrate_legacy_games():
