@@ -274,29 +274,6 @@ def initialize_default_data():
             track_type = TrackType(**tt_data)
             db.session.add(track_type)
     
-    # 2. ALLE STANDARD PLACES AUSKOMMENTIERT:
-    # bulach = Place.query.filter_by(name='Bülach').first()
-    # if not bulach:
-    #     bulach = Place(name='Bülach', track_count=18, is_default=True)
-    #     db.session.add(bulach)
-    #     db.session.flush()  # Get ID
-    #     bulach.setup_default_tracks()
-    
-    # 3. WEITERE STANDARD PLACES AUSKOMMENTIERT:
-    # standard_places = [
-    #     {'name': 'Zürich Minigolf', 'track_count': 18, 'is_default': True},
-    #     {'name': 'Winterthur Adventure Golf', 'track_count': 14, 'is_default': False},
-    #     {'name': 'Rapperswil Minigolf', 'track_count': 18, 'is_default': False},
-    # ]
-    
-    # for place_data in standard_places:
-    #     existing = Place.query.filter_by(name=place_data['name']).first()
-    #     if not existing:
-    #         new_place = Place(**place_data)
-    #         db.session.add(new_place)
-    #         db.session.flush()
-    #         new_place.setup_default_tracks()
-    
     db.session.commit()
     log_action("Track Types initialized - NO standard places created")
 
@@ -795,8 +772,6 @@ def game_results(game_id):
         logger.error(f"❌ Results error: {str(e)}")
         return f"<h1>Error</h1><p>Game not found or error loading results.</p>", 404
 
-# Füge diesen Endpoint zu deiner app.py hinzu (nach den anderen Routes):
-
 @app.route('/cleanup-standard-places')
 def cleanup_standard_places():
     """Development/Admin: Remove all standard places that were auto-created"""
@@ -861,60 +836,102 @@ def cleanup_standard_places():
         return f"<h1>Cleanup Error</h1><p>{str(e)}</p>", 500        
 
 # ------------------------------
-# API ENDPOINTS (UPDATED - NO MORE "TEMP")
+# API ENDPOINTS (UPDATED - DEBUG VERSIONS)
 # ------------------------------
 
 @app.route('/api/places', methods=['GET'])
 def get_places():
-    """Real places API for autocomplete"""
+    """Get all places - DEBUG VERSION with better error handling"""
     try:
+        # Test database connection
+        if not check_database_connection():
+            return jsonify({'status': 'error', 'message': 'Database not connected'}), 503
+        
+        # Test if table exists
+        if not check_tables_exist():
+            return jsonify({'status': 'error', 'message': 'Tables do not exist'}), 503
+        
+        # Get places
         places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
         places_data = []
         
         for place in places:
-            places_data.append({
-                'id': place.id,
-                'name': place.name,
-                'track_count': place.track_count,
-                'is_default': place.is_default,
-                'has_custom_config': len(place.place_tracks) > 0
-            })
+            try:
+                places_data.append({
+                    'id': place.id,
+                    'name': place.name,
+                    'track_count': place.track_count,
+                    'is_default': place.is_default,
+                    'has_custom_config': len(place.place_tracks) > 0 if place.place_tracks else False
+                })
+            except Exception as place_error:
+                logger.error(f"Error processing place {place.id}: {str(place_error)}")
+                # Skip problematic place
+                continue
+        
+        log_action(f"API: Places returned {len(places_data)} items")
         
         return jsonify({
             'status': 'success',
-            'places': places_data
+            'places': places_data,
+            'count': len(places_data)
         })
         
     except Exception as e:
-        logger.error(f"❌ Get places error: {str(e)}")
-        return jsonify({'status': 'error', 'message': 'Failed to load places'}), 500
+        logger.error(f"❌ Get places API error: {str(e)}")
+        return jsonify({
+            'status': 'error', 
+            'message': f'API Error: {str(e)}',
+            'endpoint': '/api/places'
+        }), 500
 
 @app.route('/api/track-types', methods=['GET'])  
 def get_track_types():
-    """Real track types API"""
+    """Get all track types - DEBUG VERSION with better error handling"""
     try:
+        # Test database connection
+        if not check_database_connection():
+            return jsonify({'status': 'error', 'message': 'Database not connected'}), 503
+        
+        # Test if table exists
+        if not check_tables_exist():
+            return jsonify({'status': 'error', 'message': 'Tables do not exist'}), 503
+        
+        # Get track types
         track_types = TrackType.query.order_by(TrackType.sort_order, TrackType.name).all()
         track_types_data = []
         
         for tt in track_types:
-            track_types_data.append({
-                'id': tt.id,
-                'name': tt.name,
-                'description': tt.description,
-                'icon_url': tt.icon_url,
-                'icon_filename': tt.icon_filename,
-                'is_default': tt.is_default,
-                'is_placeholder': tt.is_placeholder
-            })
+            try:
+                track_types_data.append({
+                    'id': tt.id,
+                    'name': tt.name,
+                    'description': tt.description or '',
+                    'icon_url': tt.icon_url,
+                    'icon_filename': tt.icon_filename,
+                    'is_default': tt.is_default,
+                    'is_placeholder': tt.is_placeholder
+                })
+            except Exception as tt_error:
+                logger.error(f"Error processing track type {tt.id}: {str(tt_error)}")
+                # Skip problematic track type
+                continue
+        
+        log_action(f"API: Track types returned {len(track_types_data)} items")
         
         return jsonify({
             'status': 'success',
-            'track_types': track_types_data
+            'track_types': track_types_data,
+            'count': len(track_types_data)
         })
         
     except Exception as e:
-        logger.error(f"❌ Get track types error: {str(e)}")
-        return jsonify({'status': 'error', 'message': 'Failed to load track types'}), 500
+        logger.error(f"❌ Get track types API error: {str(e)}")
+        return jsonify({
+            'status': 'error', 
+            'message': f'API Error: {str(e)}',
+            'endpoint': '/api/track-types'
+        }), 500
 
 @app.route('/api/places/<int:place_id>/tracks')
 def get_place_track_config(place_id):
@@ -962,6 +979,25 @@ def get_place_track_config(place_id):
 def api_status():
     """API status endpoint"""
     return health_check()
+
+# NEW: API Test endpoint from paste.txt
+@app.route('/api-test')
+def api_test():
+    """Test API endpoints"""
+    return f"""
+    <h1>🧪 API Test</h1>
+    <p>Click these links to test:</p>
+    <ul>
+        <li><a href="/api/places" target="_blank">📍 GET /api/places</a></li>
+        <li><a href="/api/track-types" target="_blank">🎯 GET /api/track-types</a></li>
+        <li><a href="/db-info" target="_blank">📊 Database Info</a></li>
+        <li><a href="/health" target="_blank">❤️ Health Check</a></li>
+    </ul>
+    <br>
+    <p><strong>Environment:</strong> {get_environment()}</p>
+    <br>
+    <a href="/settings">⚙️ Settings</a>
+    """
 
 @app.route('/settings')
 def settings():
