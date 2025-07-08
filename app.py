@@ -594,7 +594,7 @@ def settings():
         return f"<h1>Settings</h1><p>Error loading settings: {str(e)}</p>", 500
 
 # ------------------------------
-# API Endpoints
+# API Endpoints - COMPLETE SET
 # ------------------------------
 
 @app.route('/api/places', methods=['GET'])
@@ -793,6 +793,170 @@ def get_place_track_config(place_id):
     except Exception as e:
         logger.error(f"❌ Get place track config error: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/places/<int:place_id>/tracks/<int:track_number>', methods=['PUT'])
+def update_single_track_type(place_id, track_number):
+    """Update track type for a specific track at a place"""
+    try:
+        place = Place.query.get_or_404(place_id)
+        data = request.get_json()
+        
+        if not data or 'track_type_id' not in data:
+            return jsonify({'status': 'error', 'message': 'track_type_id required'}), 400
+        
+        track_type_id = int(data['track_type_id'])
+        track_type = TrackType.query.get_or_404(track_type_id)
+        
+        # Validate track number
+        if track_number < 1 or track_number > place.track_count:
+            return jsonify({'status': 'error', 'message': 'Invalid track number'}), 400
+        
+        # Find or create PlaceTrack
+        place_track = PlaceTrack.query.filter_by(place_id=place_id, track_number=track_number).first()
+        
+        if place_track:
+            place_track.track_type_id = track_type_id
+        else:
+            place_track = PlaceTrack(
+                place_id=place_id,
+                track_number=track_number,
+                track_type_id=track_type_id
+            )
+            db.session.add(place_track)
+        
+        db.session.commit()
+        
+        log_action(f"Track type updated: Place {place.name}, Track {track_number} -> {track_type.name}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Track {track_number} updated to {track_type.name}',
+            'track': {
+                'track_number': track_number,
+                'track_type_id': track_type_id,
+                'track_type_name': track_type.name,
+                'icon_url': track_type.icon_url
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Update single track type error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/places/<int:place_id>/tracks', methods=['PUT'])
+def update_place_track_config(place_id):
+    """Update complete track configuration for a place"""
+    try:
+        place = Place.query.get_or_404(place_id)
+        data = request.get_json()
+        
+        if not data or 'track_config' not in data:
+            return jsonify({'status': 'error', 'message': 'track_config required'}), 400
+        
+        track_config = data['track_config']
+        updated_tracks = 0
+        
+        for track_data in track_config:
+            track_number = track_data.get('track_number')
+            track_type_id = track_data.get('track_type_id')
+            
+            if not track_number or not track_type_id:
+                continue
+            
+            # Validate track number
+            if track_number < 1 or track_number > place.track_count:
+                continue
+            
+            # Validate track type exists
+            if not TrackType.query.get(track_type_id):
+                continue
+            
+            # Find or create PlaceTrack
+            place_track = PlaceTrack.query.filter_by(place_id=place_id, track_number=track_number).first()
+            
+            if place_track:
+                place_track.track_type_id = track_type_id
+            else:
+                place_track = PlaceTrack(
+                    place_id=place_id,
+                    track_number=track_number,
+                    track_type_id=track_type_id
+                )
+                db.session.add(place_track)
+            
+            updated_tracks += 1
+        
+        db.session.commit()
+        
+        log_action(f"Track config updated: Place {place.name}, {updated_tracks} tracks")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Updated {updated_tracks} tracks',
+            'updated_tracks': updated_tracks
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Update place track config error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/debug/track-icons')
+def debug_track_icons():
+    """Debug endpoint to check track icon files"""
+    try:
+        # Get all track types from database
+        track_types = TrackType.query.all()
+        track_types_data = []
+        
+        for tt in track_types:
+            track_types_data.append({
+                'id': tt.id,
+                'name': tt.name,
+                'icon_filename': tt.icon_filename,
+                'icon_url': tt.icon_url
+            })
+        
+        # Check which icon files exist in static folder
+        import os
+        static_path = os.path.join(app.root_path, 'static', 'track-icons')
+        available_files = []
+        
+        if os.path.exists(static_path):
+            available_files = [f for f in os.listdir(static_path) if f.endswith(('.png', '.jpg', '.jpeg', '.svg', '.gif'))]
+        
+        # Find missing icons
+        missing_icons = []
+        for tt in track_types_data:
+            if tt['icon_filename'] not in available_files:
+                missing_icons.append({
+                    'track_type': tt['name'],
+                    'filename': tt['icon_filename']
+                })
+        
+        debug_info = {
+            'status': 'success',
+            'track_types': track_types_data,
+            'files': available_files,
+            'missing_icons': missing_icons,
+            'static_path': static_path,
+            'files_count': len(available_files),
+            'track_types_count': len(track_types_data),
+            'missing_count': len(missing_icons)
+        }
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        logger.error(f"❌ Debug track icons error: {str(e)}")
+        return jsonify({
+            'status': 'error', 
+            'message': str(e),
+            'track_types': [],
+            'files': [],
+            'missing_icons': []
+        }), 500
 
 # ------------------------------
 # Health Check
