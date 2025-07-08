@@ -360,200 +360,116 @@ def ensure_database():
 # Health Check & Manual Init Routes
 # ------------------------------
 
-# REPLACE your existing @app.route('/api/places', methods=['GET']) with this:
-
-@app.route('/api/places', methods=['GET'])
-def get_places():
-    """Get all places - CRASH-SAFE VERSION"""
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Render"""
     try:
-        # Basic health checks first
-        if not check_database_connection():
-            logger.error("Database not connected in get_places")
-            return jsonify({
-                'status': 'error', 
-                'message': 'Database not connected',
-                'places': []
-            }), 503
+        # Check database connection
+        db_status = check_database_connection()
+        tables_exist = check_tables_exist() if db_status else False
         
-        if not check_tables_exist():
-            logger.error("Tables don't exist in get_places")
-            return jsonify({
-                'status': 'error', 
-                'message': 'Database tables not found',
-                'places': []
-            }), 503
+        # Get basic stats
+        game_count = Game.query.count() if db_status and tables_exist else 0
+        place_count = Place.query.count() if db_status and tables_exist else 0
         
-        # Try to get places with individual error handling
-        places = []
-        places_data = []
+        status = {
+            'status': 'healthy' if (db_status and tables_exist) else 'unhealthy',
+            'environment': get_environment(),
+            'database': 'connected' if db_status else 'disconnected',
+            'tables': 'exist' if tables_exist else 'missing',
+            'games_count': game_count,
+            'places_count': place_count,
+            'auto_init': 'enabled',
+            'timestamp': datetime.utcnow().isoformat()
+        }
         
-        try:
-            places = Place.query.all()
-            logger.info(f"Found {len(places)} places in database")
-        except Exception as query_error:
-            logger.error(f"Error querying places: {str(query_error)}")
-            return jsonify({
-                'status': 'error',
-                'message': f'Database query failed: {str(query_error)}',
-                'places': []
-            }), 500
+        return jsonify(status), 200 if (db_status and tables_exist) else 503
+      
+    except Exception as e:
+        logger.error(f"❌ Health check failed: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/initdb')
+def initdb():
+    """Manual database initialization - now mostly for debugging"""
+    try:
+        if is_development():
+            # Development: Allow optional reset
+            reset_requested = request.args.get('reset', '').lower() == 'true'
+            
+            if reset_requested:
+                log_action("Manual database reset (development only)")
+            #    db.drop_all()
+                
+            success = safe_database_init()
+            
+            if success:
+                action = "reset and created" if reset_requested else "initialized"
+                log_action(f"Manual database {action}")
+                return f"✅ Development: Database {action} successfully.<br><small>Note: Auto-initialization is now enabled!</small>"
+            else:
+                return "❌ Database initialization failed.", 500
+                
+        else:
+            # Production: Only safe initialization
+            success = safe_database_init()
+            
+            if success:
+                log_action("Manual database initialization")
+                return "✅ Production: Database safely initialized.<br><small>Note: This should happen automatically now!</small>"
+            else:
+                return "❌ Database initialization failed.", 500
+                
+    except Exception as e:
+        logger.error(f"❌ Manual database init error: {str(e)}")
+        return f"<h1>Database Error</h1><p>{str(e)}</p>", 500
+
+@app.route('/db-info')
+def db_info():
+    """Database information and statistics"""
+    try:
+        # Connection test
+        db_connected = check_database_connection()
+        tables_exist = check_tables_exist() if db_connected else False
         
-        # Process each place safely
-        for place in places:
-            try:
-                # Basic place data
-                place_data = {
-                    'id': place.id,
-                    'name': place.name,
-                    'track_count': place.track_count,
-                    'is_default': place.is_default,
-                    'has_custom_config': False  # Default value
+        if not db_connected:
+            return jsonify({'error': 'Database not connected'}), 503
+        
+        # Gather statistics
+        stats = {
+            'environment': get_environment(),
+            'database_type': 'PostgreSQL' if 'postgresql://' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite',
+            'connection_status': 'connected',
+            'tables_status': 'exist' if tables_exist else 'missing',
+            'auto_initialization': 'enabled',
+            'tables': {
+                'games': Game.query.count() if tables_exist else 0,
+                'players': Player.query.count() if tables_exist else 0,
+                'scores': Score.query.count() if tables_exist else 0,
+                'places': Place.query.count() if tables_exist else 0,
+                'track_types': TrackType.query.count() if tables_exist else 0,
+                'place_tracks': PlaceTrack.query.count() if tables_exist else 0
+            } if tables_exist else 'tables_missing',
+            'latest_game': None,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        
+        # Get latest game info
+        if tables_exist:
+            latest_game = Game.query.order_by(Game.id.desc()).first()
+            if latest_game:
+                stats['latest_game'] = {
+                    'id': latest_game.id,
+                    'place': latest_game.place,
+                    'date': latest_game.date,
+                    'players': len(latest_game.players)
                 }
-                
-                # Try to get track config info safely
-                try:
-                    if hasattr(place, 'place_tracks') and place.place_tracks:
-                        place_data['has_custom_config'] = len(place.place_tracks) > 0
-                except Exception as track_error:
-                    logger.warning(f"Error checking tracks for place {place.id}: {str(track_error)}")
-                    # Continue with default value
-                
-                places_data.append(place_data)
-                
-            except Exception as place_error:
-                logger.error(f"Error processing place {place.id}: {str(place_error)}")
-                # Skip this problematic place, continue with others
-                continue
         
-        # Sort places safely
-        try:
-            places_data.sort(key=lambda x: (not x.get('is_default', False), x.get('name', '')))
-        except Exception as sort_error:
-            logger.warning(f"Error sorting places: {str(sort_error)}")
-            # Continue with unsorted data
-        
-        logger.info(f"Successfully processed {len(places_data)} places for API")
-        
-        return jsonify({
-            'status': 'success',
-            'places': places_data,
-            'count': len(places_data),
-            'total_in_db': len(places)
-        })
+        return jsonify(stats)
         
     except Exception as e:
-        logger.error(f"❌ Critical error in get_places API: {str(e)}")
-        # Return error but don't crash the whole app
-        return jsonify({
-            'status': 'error', 
-            'message': f'Internal server error: {str(e)}',
-            'places': [],
-            'count': 0
-        }), 500
-
-# ADD these missing API endpoints that Settings needs:
-
-@app.route('/api/places', methods=['POST'])
-def create_place():
-    """Create new place"""
-    try:
-        data = request.get_json()
-        if not data or not data.get('name'):
-            return jsonify({'status': 'error', 'message': 'Name required'}), 400
-        
-        place_name = data.get('name').strip()
-        track_count = int(data.get('track_count', 18))
-        is_default = data.get('is_default', False)
-        
-        # Check if exists
-        if Place.query.filter_by(name=place_name).first():
-            return jsonify({'status': 'error', 'message': 'Place already exists'}), 400
-        
-        # Create place
-        new_place = Place(name=place_name, track_count=track_count, is_default=is_default)
-        db.session.add(new_place)
-        db.session.flush()
-        new_place.setup_default_tracks()
-        db.session.commit()
-        
-        log_action(f"Place created via API: {place_name}")
-        return jsonify({'status': 'success', 'place_id': new_place.id})
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Create place error: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/places/<int:place_id>', methods=['PUT'])
-def update_place(place_id):
-    """Update existing place"""
-    try:
-        place = Place.query.get_or_404(place_id)
-        data = request.get_json()
-        
-        if 'name' in data:
-            place.name = data['name'].strip()
-        if 'track_count' in data:
-            place.track_count = int(data['track_count'])
-        if 'is_default' in data:
-            place.is_default = data['is_default']
-        
-        db.session.commit()
-        log_action(f"Place updated via API: {place.name}")
-        return jsonify({'status': 'success'})
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Update place error: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/places/<int:place_id>', methods=['DELETE'])
-def delete_place_api(place_id):
-    """Delete place"""
-    try:
-        place = Place.query.get_or_404(place_id)
-        place_name = place.name
-        
-        # Check if used by games
-        games_count = Game.query.filter_by(place_id=place_id).count()
-        if games_count > 0:
-            return jsonify({'status': 'error', 'message': f'Place used by {games_count} games'}), 400
-        
-        db.session.delete(place)
-        db.session.commit()
-        
-        log_action(f"Place deleted via API: {place_name}")
-        return jsonify({'status': 'success'})
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Delete place error: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-# Quick API test route
-@app.route('/api-test')
-def api_test():
-    """Test all API endpoints"""
-    return f"""
-    <h1>🧪 API Test</h1>
-    <p><strong>Environment:</strong> {get_environment()}</p>
-    
-    <h2>📋 Test API Endpoints:</h2>
-    <ul>
-        <li><a href="/api/places" target="_blank">📍 GET /api/places</a></li>
-        <li><a href="/api/track-types" target="_blank">🎯 GET /api/track-types</a></li>
-        <li><a href="/api/status" target="_blank">❤️ GET /api/status</a></li>
-        <li><a href="/health" target="_blank">🏥 GET /health</a></li>
-        <li><a href="/db-info" target="_blank">📊 GET /db-info</a></li>
-    </ul>
-    
-    <h2>⚙️ Next Steps:</h2>
-    <ol>
-        <li>Verify all APIs return JSON</li>
-        <li><a href="/settings">Test Settings Page</a></li>
-        <li>Create/Edit/Delete places to test persistence</li>
-    </ol>
-    """
+        logger.error(f"❌ DB info error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 # ------------------------------
 # Main Application Routes
@@ -830,6 +746,32 @@ def game_results(game_id):
         logger.error(f"❌ Results error: {str(e)}")
         return f"<h1>Error</h1><p>Game not found or error loading results.</p>", 404
 
+@app.route('/settings')
+def settings():
+    """Settings page with real data"""
+    try:
+        # Get current statistics
+        stats = {
+            'places_count': Place.query.count(),
+            'track_types_count': TrackType.query.count(),
+            'games_count': Game.query.count(),
+            'players_count': Player.query.count(),
+            'scores_count': Score.query.count()
+        }
+        
+        # Get places and track types for settings
+        places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
+        track_types = TrackType.query.order_by(TrackType.sort_order).all()
+        
+        return render_template('settings.html', 
+                             stats=stats, 
+                             places=places, 
+                             track_types=track_types)
+        
+    except Exception as e:
+        logger.error(f"❌ Settings page error: {str(e)}")
+        return f"<h1>Settings</h1><p>Error loading settings: {str(e)}</p>", 500
+
 @app.route('/cleanup-standard-places')
 def cleanup_standard_places():
     """Development/Admin: Remove all standard places that were auto-created"""
@@ -891,61 +833,181 @@ def cleanup_standard_places():
     except Exception as e:
         db.session.rollback()
         logger.error(f"❌ Cleanup error: {str(e)}")
-        return f"<h1>Cleanup Error</h1><p>{str(e)}</p>", 500        
+        return f"<h1>Cleanup Error</h1><p>{str(e)}</p>", 500
 
 # ------------------------------
-# API ENDPOINTS (UPDATED - DEBUG VERSIONS)
+# API ENDPOINTS - CRASH-SAFE VERSIONS
 # ------------------------------
 
 @app.route('/api/places', methods=['GET'])
 def get_places():
-    """Get all places - DEBUG VERSION with better error handling"""
+    """Get all places - CRASH-SAFE VERSION"""
     try:
-        # Test database connection
+        # Basic health checks first
         if not check_database_connection():
-            return jsonify({'status': 'error', 'message': 'Database not connected'}), 503
+            logger.error("Database not connected in get_places")
+            return jsonify({
+                'status': 'error', 
+                'message': 'Database not connected',
+                'places': []
+            }), 503
         
-        # Test if table exists
         if not check_tables_exist():
-            return jsonify({'status': 'error', 'message': 'Tables do not exist'}), 503
+            logger.error("Tables don't exist in get_places")
+            return jsonify({
+                'status': 'error', 
+                'message': 'Database tables not found',
+                'places': []
+            }), 503
         
-        # Get places
-        places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
+        # Try to get places with individual error handling
+        places = []
         places_data = []
         
+        try:
+            places = Place.query.all()
+            logger.info(f"Found {len(places)} places in database")
+        except Exception as query_error:
+            logger.error(f"Error querying places: {str(query_error)}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Database query failed: {str(query_error)}',
+                'places': []
+            }), 500
+        
+        # Process each place safely
         for place in places:
             try:
-                places_data.append({
+                # Basic place data
+                place_data = {
                     'id': place.id,
                     'name': place.name,
                     'track_count': place.track_count,
                     'is_default': place.is_default,
-                    'has_custom_config': len(place.place_tracks) > 0 if place.place_tracks else False
-                })
+                    'has_custom_config': False  # Default value
+                }
+                
+                # Try to get track config info safely
+                try:
+                    if hasattr(place, 'place_tracks') and place.place_tracks:
+                        place_data['has_custom_config'] = len(place.place_tracks) > 0
+                except Exception as track_error:
+                    logger.warning(f"Error checking tracks for place {place.id}: {str(track_error)}")
+                    # Continue with default value
+                
+                places_data.append(place_data)
+                
             except Exception as place_error:
                 logger.error(f"Error processing place {place.id}: {str(place_error)}")
-                # Skip problematic place
+                # Skip this problematic place, continue with others
                 continue
         
-        log_action(f"API: Places returned {len(places_data)} items")
+        # Sort places safely
+        try:
+            places_data.sort(key=lambda x: (not x.get('is_default', False), x.get('name', '')))
+        except Exception as sort_error:
+            logger.warning(f"Error sorting places: {str(sort_error)}")
+            # Continue with unsorted data
+        
+        logger.info(f"Successfully processed {len(places_data)} places for API")
         
         return jsonify({
             'status': 'success',
             'places': places_data,
-            'count': len(places_data)
+            'count': len(places_data),
+            'total_in_db': len(places)
         })
         
     except Exception as e:
-        logger.error(f"❌ Get places API error: {str(e)}")
+        logger.error(f"❌ Critical error in get_places API: {str(e)}")
+        # Return error but don't crash the whole app
         return jsonify({
             'status': 'error', 
-            'message': f'API Error: {str(e)}',
-            'endpoint': '/api/places'
+            'message': f'Internal server error: {str(e)}',
+            'places': [],
+            'count': 0
         }), 500
+
+@app.route('/api/places', methods=['POST'])
+def create_place():
+    """Create new place"""
+    try:
+        data = request.get_json()
+        if not data or not data.get('name'):
+            return jsonify({'status': 'error', 'message': 'Name required'}), 400
+        
+        place_name = data.get('name').strip()
+        track_count = int(data.get('track_count', 18))
+        is_default = data.get('is_default', False)
+        
+        # Check if exists
+        if Place.query.filter_by(name=place_name).first():
+            return jsonify({'status': 'error', 'message': 'Place already exists'}), 400
+        
+        # Create place
+        new_place = Place(name=place_name, track_count=track_count, is_default=is_default)
+        db.session.add(new_place)
+        db.session.flush()
+        new_place.setup_default_tracks()
+        db.session.commit()
+        
+        log_action(f"Place created via API: {place_name}")
+        return jsonify({'status': 'success', 'place_id': new_place.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Create place error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/places/<int:place_id>', methods=['PUT'])
+def update_place(place_id):
+    """Update existing place"""
+    try:
+        place = Place.query.get_or_404(place_id)
+        data = request.get_json()
+        
+        if 'name' in data:
+            place.name = data['name'].strip()
+        if 'track_count' in data:
+            place.track_count = int(data['track_count'])
+        if 'is_default' in data:
+            place.is_default = data['is_default']
+        
+        db.session.commit()
+        log_action(f"Place updated via API: {place.name}")
+        return jsonify({'status': 'success'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Update place error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/places/<int:place_id>', methods=['DELETE'])
+def delete_place_api(place_id):
+    """Delete place"""
+    try:
+        place = Place.query.get_or_404(place_id)
+        place_name = place.name
+        
+        # Check if used by games
+        games_count = Game.query.filter_by(place_id=place_id).count()
+        if games_count > 0:
+            return jsonify({'status': 'error', 'message': f'Place used by {games_count} games'}), 400
+        
+        db.session.delete(place)
+        db.session.commit()
+        
+        log_action(f"Place deleted via API: {place_name}")
+        return jsonify({'status': 'success'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Delete place error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/track-types', methods=['GET'])  
 def get_track_types():
-    """Get all track types - DEBUG VERSION with better error handling"""
+    """Get all track types - CRASH-SAFE VERSION"""
     try:
         # Test database connection
         if not check_database_connection():
@@ -1038,50 +1100,37 @@ def api_status():
     """API status endpoint"""
     return health_check()
 
-# NEW: API Test endpoint from paste.txt
+# ------------------------------
+# Debug & Test Routes
+# ------------------------------
+
 @app.route('/api-test')
 def api_test():
     """Test API endpoints"""
     return f"""
     <h1>🧪 API Test</h1>
-    <p>Click these links to test:</p>
+    <p><strong>Environment:</strong> {get_environment()}</p>
+    
+    <h2>📋 Test API Endpoints:</h2>
     <ul>
         <li><a href="/api/places" target="_blank">📍 GET /api/places</a></li>
         <li><a href="/api/track-types" target="_blank">🎯 GET /api/track-types</a></li>
-        <li><a href="/db-info" target="_blank">📊 Database Info</a></li>
-        <li><a href="/health" target="_blank">❤️ Health Check</a></li>
+        <li><a href="/api/status" target="_blank">❤️ GET /api/status</a></li>
+        <li><a href="/health" target="_blank">🏥 GET /health</a></li>
+        <li><a href="/db-info" target="_blank">📊 GET /db-info</a></li>
     </ul>
+    
+    <h2>⚙️ Next Steps:</h2>
+    <ol>
+        <li>Verify all APIs return JSON</li>
+        <li><a href="/settings">Test Settings Page</a></li>
+        <li>Create/Edit/Delete places to test persistence</li>
+    </ol>
+    
     <br>
-    <p><strong>Environment:</strong> {get_environment()}</p>
-    <br>
-    <a href="/settings">⚙️ Settings</a>
+    <a href="/settings" style="background: #f8c098; color: #2d3748; padding: 10px 20px; text-decoration: none; border-radius: 8px;">⚙️ Settings</a>
+    <a href="/" style="background: #3b5c6c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-left: 10px;">🏠 Home</a>
     """
-
-@app.route('/settings')
-def settings():
-    """Settings page with real data"""
-    try:
-        # Get current statistics
-        stats = {
-            'places_count': Place.query.count(),
-            'track_types_count': TrackType.query.count(),
-            'games_count': Game.query.count(),
-            'players_count': Player.query.count(),
-            'scores_count': Score.query.count()
-        }
-        
-        # Get places and track types for settings
-        places = Place.query.order_by(Place.is_default.desc(), Place.name).all()
-        track_types = TrackType.query.order_by(TrackType.sort_order).all()
-        
-        return render_template('settings.html', 
-                             stats=stats, 
-                             places=places, 
-                             track_types=track_types)
-        
-    except Exception as e:
-        logger.error(f"❌ Settings page error: {str(e)}")
-        return f"<h1>Settings</h1><p>Error loading settings: {str(e)}</p>", 500
 
 # ------------------------------
 # Error Handlers
@@ -1090,14 +1139,14 @@ def settings():
 @app.errorhandler(404)
 def not_found_error(error):
     """Handle 404 errors"""
-    return render_template('404.html'), 404
+    return f"<h1>404 - Page Not Found</h1><p>The requested page was not found.</p><a href='/'>🏠 Home</a>", 404
 
 @app.errorhandler(500)
 def internal_error(error):
     """Handle 500 errors"""
     db.session.rollback()
     logger.error(f"❌ Internal server error: {str(error)}")
-    return render_template('500.html'), 500
+    return f"<h1>500 - Internal Server Error</h1><p>Something went wrong.</p><a href='/'>🏠 Home</a>", 500
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -1110,7 +1159,7 @@ def handle_exception(e):
     else:
         # In production, show generic error page
         db.session.rollback()
-        return f"<h1>🏌️ Gopher Minigolf</h1><p>Something went wrong. Please try again.</p>", 500
+        return f"<h1>🏌️ Gopher Minigolf</h1><p>Something went wrong. Please try again.</p><a href='/'>🏠 Home</a>", 500
 
 # ------------------------------
 # Application Startup & Initialization
