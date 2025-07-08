@@ -795,6 +795,71 @@ def game_results(game_id):
         logger.error(f"❌ Results error: {str(e)}")
         return f"<h1>Error</h1><p>Game not found or error loading results.</p>", 404
 
+# Füge diesen Endpoint zu deiner app.py hinzu (nach den anderen Routes):
+
+@app.route('/cleanup-standard-places')
+def cleanup_standard_places():
+    """Development/Admin: Remove all standard places that were auto-created"""
+    try:
+        if is_production():
+            return jsonify({'error': 'Not available in production'}), 403
+        
+        # Liste der Standard-Places die entfernt werden sollen
+        standard_place_names = [
+            'Bülach',
+            'Zürich Minigolf', 
+            'Winterthur Adventure Golf',
+            'Rapperswil Minigolf',
+            'Bülach Adventure Golf',
+            'Minigolf Zürich',
+            'Fun Golf Winterthur'
+        ]
+        
+        deleted_count = 0
+        deleted_places = []
+        
+        for place_name in standard_place_names:
+            place = Place.query.filter_by(name=place_name).first()
+            if place:
+                # Prüfe ob Place in Games verwendet wird
+                games_count = Game.query.filter_by(place_id=place.id).count()
+                
+                if games_count == 0:
+                    # Sicher zu löschen - keine Games verwenden diesen Place
+                    deleted_places.append(f"{place.name} ({place.track_count} Bahnen)")
+                    db.session.delete(place)
+                    deleted_count += 1
+                else:
+                    deleted_places.append(f"⚠️ {place.name} BEHALTEN (wird von {games_count} Spielen verwendet)")
+        
+        db.session.commit()
+        
+        result_html = f"""
+        <h1>🧹 Standard Places Cleanup</h1>
+        <h2>✅ Ergebnis:</h2>
+        <p><strong>{deleted_count} Places gelöscht</strong></p>
+        <ul>
+        """
+        
+        for place_info in deleted_places:
+            result_html += f"<li>{place_info}</li>"
+        
+        result_html += """
+        </ul>
+        <br>
+        <a href="/settings" style="background: #f8c098; color: #2d3748; padding: 10px 20px; text-decoration: none; border-radius: 8px;">⚙️ Zu Settings</a>
+        <a href="/" style="background: #3b5c6c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-left: 10px;">🏠 Home</a>
+        """
+        
+        log_action(f"Cleanup: {deleted_count} standard places removed")
+        
+        return result_html
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Cleanup error: {str(e)}")
+        return f"<h1>Cleanup Error</h1><p>{str(e)}</p>", 500        
+
 # ------------------------------
 # API ENDPOINTS (UPDATED - NO MORE "TEMP")
 # ------------------------------
