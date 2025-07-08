@@ -409,7 +409,7 @@ def health_check():
         }
         
         return jsonify(status), 200 if (db_status and tables_exist) else 503
-        
+ # fall       
     except Exception as e:
         logger.error(f"❌ Health check failed: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
