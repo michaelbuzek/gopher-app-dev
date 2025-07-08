@@ -780,6 +780,30 @@
         let isEditMode = false;
         let currentTrackConfig = [];
 
+        // Debug function für Icon Loading
+        async function debugTrackIcons() {
+            try {
+                const response = await fetch('/api/debug/track-icons');
+                const debug = await response.json();
+                
+                console.log('🔍 Track Icons Debug:', debug);
+                
+                // Check welche Icons fehlen
+                const missingIcons = debug.track_types.filter(tt => 
+                    !debug.files.includes(tt.icon_filename)
+                );
+                
+                if (missingIcons.length > 0) {
+                    console.warn('⚠️ Missing icon files:', missingIcons);
+                }
+                
+                return debug;
+            } catch (error) {
+                console.error('❌ Debug error:', error);
+                return null;
+            }
+        }
+
         // 🔥 REAL API DATA LOADING - NO MORE MOCK DATA!
         async function loadData() {
             console.log('🚀 Loading settings data from REAL API...');
@@ -817,6 +841,7 @@
             renderPlaces();
         }
 
+        // Verbesserte Track Type Loading mit Fallback
         async function loadTrackTypes() {
             console.log('🎯 Loading track types from API...');
             
@@ -824,10 +849,15 @@
             hideElement('trackTypesGrid');
 
             try {
-                // 🔥 REAL API CALL WITH FALLBACK
+                // Debug icons first
+                await debugTrackIcons();
+                
                 const response = await fetch('/api/track-types');
                 
-                // Check if response is actually JSON
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     throw new Error('API returned HTML instead of JSON - endpoint may not exist');
@@ -846,39 +876,35 @@
                 console.error('❌ Failed to load track types from API:', error);
                 console.log('🔄 Using fallback track types...');
                 
-                // FALLBACK: Use default track types if API fails
+                // Enhanced fallback with proper icon URLs
                 trackTypes = [
                     {
                         id: 1,
                         name: 'Standard',
                         description: 'Standard Minigolf Bahn',
                         icon_url: '/static/track-icons/bahn_placeholder.png',
-                        is_default: true,
-                        is_placeholder: false
+                        is_default: true
                     },
                     {
                         id: 2,
                         name: 'Kurve Links',
                         description: 'Linkskurve',
                         icon_url: '/static/track-icons/bahn_kurve_links.png',
-                        is_default: false,
-                        is_placeholder: false
+                        is_default: false
                     },
                     {
                         id: 3,
                         name: 'Kurve Rechts',
                         description: 'Rechtskurve',
                         icon_url: '/static/track-icons/bahn_kurve_rechts.png',
-                        is_default: false,
-                        is_placeholder: false
+                        is_default: false
                     },
                     {
                         id: 4,
                         name: 'Hindernis',
                         description: 'Bahn mit Hindernis',
                         icon_url: '/static/track-icons/bahn_hindernis.png',
-                        is_default: false,
-                        is_placeholder: false
+                        is_default: false
                     }
                 ];
                 
@@ -1100,25 +1126,41 @@
                     throw new Error('Track type not found');
                 }
 
-                // 🔥 HERE YOU WOULD MAKE A REAL API CALL TO UPDATE TRACK TYPE
-                // For now, just update locally
-                const trackIndex = currentTrackConfig.findIndex(track => track.track_number === currentTrackNumber);
-                if (trackIndex !== -1) {
-                    currentTrackConfig[trackIndex] = {
-                        track_number: currentTrackNumber,
-                        track_type_id: newTrackType.id,
-                        track_type_name: newTrackType.name,
-                        icon_url: newTrackType.icon_url
-                    };
-                }
+                // 🔥 REAL API CALL TO UPDATE TRACK TYPE
+                const response = await fetch(`/api/places/${currentPlaceId}/tracks/${currentTrackNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        track_type_id: trackTypeId
+                    })
+                });
 
-                // Re-render the track configuration
-                renderTrackConfiguration(currentTrackConfig);
+                const result = await response.json();
                 
-                closeTrackTypeModal();
-                showMessage(`Bahn ${currentTrackNumber} erfolgreich auf "${newTrackType.name}" geändert!`, 'success');
-                
-                console.log('✅ Track type updated successfully');
+                if (result.status === 'success') {
+                    // Update local config with server response
+                    const trackIndex = currentTrackConfig.findIndex(track => track.track_number === currentTrackNumber);
+                    if (trackIndex !== -1) {
+                        currentTrackConfig[trackIndex] = {
+                            track_number: currentTrackNumber,
+                            track_type_id: newTrackType.id,
+                            track_type_name: newTrackType.name,
+                            icon_url: newTrackType.icon_url
+                        };
+                    }
+
+                    // Re-render the track configuration
+                    renderTrackConfiguration(currentTrackConfig);
+                    
+                    closeTrackTypeModal();
+                    showMessage(`Bahn ${currentTrackNumber} erfolgreich auf "${newTrackType.name}" geändert!`, 'success');
+                    
+                    console.log('✅ Track type updated successfully via API');
+                } else {
+                    throw new Error(result.message || 'Failed to update track type');
+                }
 
             } catch (error) {
                 console.error('❌ Fehler beim Aktualisieren des Track-Typs:', error);
@@ -1126,7 +1168,7 @@
             }
         }
 
-        // 🔥 REAL FORM SUBMISSION WITH API CALLS
+        // 🔥 REAL FORM SUBMISSION WITH API CALLS - IMPROVED VERSION
         document.getElementById('placeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1140,8 +1182,7 @@
             const formData = {
                 name: document.getElementById('placeName').value.trim(),
                 track_count: parseInt(document.getElementById('placeTrackCount').value),
-                is_default: document.getElementById('isDefaultPlace').checked,
-                track_config: currentTrackConfig // Include track config
+                is_default: document.getElementById('isDefaultPlace').checked
             };
 
             if (!formData.name) {
@@ -1152,7 +1193,7 @@
             }
 
             try {
-                // 🔥 REAL API CALL TO SAVE PLACE
+                // 🔥 STEP 1: Save or Update Place
                 const url = isEditMode ? `/api/places/${currentPlaceId}` : '/api/places';
                 const method = isEditMode ? 'PUT' : 'POST';
                 
@@ -1167,6 +1208,40 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
+                    let savedPlaceId = currentPlaceId;
+                    
+                    // For new places, get the place ID
+                    if (!isEditMode) {
+                        savedPlaceId = result.place_id;
+                    }
+                    
+                    // 🔥 STEP 2: Save Track Configuration (if editing and has config)
+                    if (isEditMode && currentTrackConfig.length > 0 && savedPlaceId) {
+                        try {
+                            const trackResponse = await fetch(`/api/places/${savedPlaceId}/tracks`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    track_config: currentTrackConfig
+                                })
+                            });
+                            
+                            const trackResult = await trackResponse.json();
+                            
+                            if (trackResult.status === 'success') {
+                                console.log('✅ Track configuration saved:', trackResult.updated_tracks, 'tracks');
+                            } else {
+                                console.warn('⚠️ Track config save warning:', trackResult.message);
+                                showMessage('Platz gespeichert, aber Track-Konfiguration hatte Probleme: ' + trackResult.message, 'error');
+                            }
+                        } catch (trackError) {
+                            console.error('❌ Track config save error:', trackError);
+                            showMessage('Platz gespeichert, aber Track-Konfiguration konnte nicht gespeichert werden.', 'error');
+                        }
+                    }
+                    
                     closePlaceModal();
                     await loadPlaces(); // Reload places from API
                     showMessage(
