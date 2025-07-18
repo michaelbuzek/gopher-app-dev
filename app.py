@@ -6,6 +6,9 @@ import json
 import os
 import logging
 import glob
+import secrets
+import hashlib
+from urllib.parse import urljoin
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -178,6 +181,7 @@ class Game(db.Model):
     
     # Relationships
     players = db.relationship('Player', backref='game', cascade="all, delete-orphan", lazy=True)
+    share_tokens = db.relationship('GameShareToken', backref='game', cascade="all, delete-orphan", lazy=True)
     
     def __repr__(self):
         return f'<Game {self.id}: {self.place} on {self.date}>'
@@ -226,6 +230,35 @@ class Score(db.Model):
     def __repr__(self):
         return f'<Score {self.id}: Track {self.track} = {self.value}>'
 
+
+class GameShareToken(db.Model):
+    """Share tokens für QR-Code game joining"""
+    __tablename__ = 'game_share_tokens'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    share_token = db.Column(db.String(20), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)  # Optional expiry
+    is_active = db.Column(db.Boolean, default=True)
+    
+    def __repr__(self):
+        return f'<GameShareToken {self.share_token} for Game {self.game_id}>'
+    
+    @staticmethod
+    def generate_token():
+        """Generate a secure, user-friendly share token"""
+        # Generate 8 character alphanumeric token (easy to type if needed)
+        return secrets.token_urlsafe(6)[:8].upper()
+    
+    def is_valid(self):
+        """Check if token is still valid"""
+        if not self.is_active:
+            return False
+        if self.expires_at and datetime.utcnow() > self.expires_at:
+            return False
+        return True
+
 # ------------------------------
 # Database Management & Health Check
 # ------------------------------
@@ -249,6 +282,12 @@ def check_tables_exist():
         db.session.execute(text('SELECT 1 FROM places LIMIT 1'))
         db.session.execute(text('SELECT 1 FROM track_types LIMIT 1'))
         db.session.execute(text('SELECT 1 FROM place_tracks LIMIT 1'))
+        # Check new table
+        try:
+            db.session.execute(text('SELECT 1 FROM game_share_tokens LIMIT 1'))
+        except:
+            # Table doesn't exist yet, that's ok
+            pass
         return True
     except Exception:
         return False
@@ -591,7 +630,8 @@ def db_info():
                 'scores': Score.query.count() if tables_exist else 0,
                 'places': Place.query.count() if tables_exist else 0,
                 'track_types': TrackType.query.count() if tables_exist else 0,
-                'place_tracks': PlaceTrack.query.count() if tables_exist else 0
+                'place_tracks': PlaceTrack.query.count() if tables_exist else 0,
+                'game_share_tokens': GameShareToken.query.count() if tables_exist else 0
             } if tables_exist else 'tables_missing',
             'latest_game': None,
             'timestamp': datetime.utcnow().isoformat()
@@ -688,7 +728,7 @@ def index():
 
 @app.route('/save', methods=['POST'])
 def save():
-    """Save new game with places support - UPDATED VERSION"""
+    """Save new game with places support + QR Share Token"""
     try:
         data = request.get_json()
         
@@ -710,13 +750,11 @@ def save():
         
         if place:
             place_id = place.id
-            # Use place's track count if provided
             track_count = place.track_count
         else:
-            # Create new place on-the-fly
             new_place = Place(name=place_name, track_count=track_count)
             db.session.add(new_place)
-            db.session.flush()  # Get ID
+            db.session.flush()
             new_place.setup_default_tracks()
             place_id = new_place.id
             log_action(f"Auto-created place: {place_name}")
@@ -724,15 +762,15 @@ def save():
         # Create game
         game = Game(
             date=data.get('date'),
-            place=place_name,  # Keep for compatibility
-            place_id=place_id,  # NEW: Reference to Place
+            place=place_name,
+            place_id=place_id,
             track_count=track_count
         )
         
         db.session.add(game)
-        db.session.flush()  # Get game.id
+        db.session.flush()
         
-        # Create players and scores (same as before)
+        # Create players and scores
         players_data = data.get('players', [])
         
         for player_data in players_data:
@@ -742,21 +780,32 @@ def save():
             
             player = Player(name=player_data['name'].strip(), game=game)
             db.session.add(player)
-            db.session.flush()  # Get player.id
+            db.session.flush()
             
-            # Create initial scores (all 0)
             for track_num in range(1, track_count + 1):
                 score = Score(track=track_num, value=0, player=player)
                 db.session.add(score)
         
+        # 🆕 NEW: Create share token for QR code
+        share_token = GameShareToken(
+            game=game,
+            share_token=GameShareToken.generate_token()
+        )
+        db.session.add(share_token)
+        
         db.session.commit()
         
-        log_action(f"Game created: {place_name} ({len(players_data)} players, {track_count} tracks)")
+        # Generate share URL for QR code
+        share_url = urljoin(request.url_root, f'join/{share_token.share_token}')
+        
+        log_action(f"Game created with QR share: {place_name} ({len(players_data)} players) - Token: {share_token.share_token}")
         
         return jsonify({
             'status': 'success', 
             'game_id': game.id,
             'place_id': place_id,
+            'share_token': share_token.share_token,  # 🆕 NEW
+            'share_url': share_url,  # 🆕 NEW  
             'message': f'Game created successfully with {len(players_data)} players'
         })
     
@@ -764,6 +813,43 @@ def save():
         db.session.rollback()
         logger.error(f"❌ Save error: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Failed to save game'}), 500
+
+# 🆕 NEW: Join game via QR code route
+@app.route('/join/<share_token>')
+def join_game(share_token):
+    """Join an existing game via QR code share token"""
+    try:
+        # Find valid share token
+        token_obj = GameShareToken.query.filter_by(
+            share_token=share_token.upper(),
+            is_active=True
+        ).first()
+        
+        if not token_obj or not token_obj.is_valid():
+            log_action(f"Invalid share token accessed: {share_token}")
+            return render_template('join_error.html', 
+                                 error_type='invalid_token',
+                                 message='Dieser QR-Code ist ungültig oder abgelaufen.'), 404
+        
+        game = token_obj.game
+        
+        # Check if game still exists and is active
+        if not game:
+            log_action(f"Share token for deleted game: {share_token}")
+            return render_template('join_error.html',
+                                 error_type='game_not_found', 
+                                 message='Dieses Spiel existiert nicht mehr.'), 404
+        
+        log_action(f"QR join successful: Token {share_token} -> Game {game.id}")
+        
+        # Redirect to score page with join success message
+        return redirect(url_for('score_detail', game_id=game.id, joined='true'))
+        
+    except Exception as e:
+        logger.error(f"❌ Join game error: {str(e)}")
+        return render_template('join_error.html',
+                             error_type='server_error',
+                             message='Ein Fehler ist aufgetreten. Bitte versuche es erneut.'), 500
 
 @app.route('/score/<int:game_id>')
 def score_detail(game_id):
@@ -1284,6 +1370,48 @@ def update_place_track_config(place_id):
         db.session.rollback()
         logger.error(f"❌ Update track config error: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# 🆕 NEW: API endpoint to get share token for existing game
+@app.route('/api/games/<int:game_id>/share')
+def get_game_share(game_id):
+    """Get share token and QR URL for existing game"""
+    try:
+        game = Game.query.get_or_404(game_id)
+        
+        # Check if active share token exists
+        existing_token = GameShareToken.query.filter_by(
+            game_id=game_id,
+            is_active=True
+        ).first()
+        
+        if existing_token and existing_token.is_valid():
+            share_token = existing_token
+        else:
+            # Create new share token
+            share_token = GameShareToken(
+                game=game,
+                share_token=GameShareToken.generate_token()
+            )
+            db.session.add(share_token)
+            db.session.commit()
+        
+        share_url = urljoin(request.url_root, f'join/{share_token.share_token}')
+        
+        return jsonify({
+            'status': 'success',
+            'share_token': share_token.share_token,
+            'share_url': share_url,
+            'game': {
+                'id': game.id,
+                'place': game.place,
+                'date': game.date,
+                'players': len(game.players)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Get share error: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Failed to get share token'}), 500
 
 @app.route('/api/status')
 def api_status():

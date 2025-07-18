@@ -301,7 +301,7 @@
         }
 
         .action-btn {
-            width: 48%;
+            width: 32%;
             padding: 12px 20px;
             border: none;
             border-radius: 10px;
@@ -325,6 +325,17 @@
         }
 
         .btn-primary:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
             background: #e2e8f0;
             transform: translateY(-1px);
         }
@@ -358,6 +369,245 @@
 
         .save-indicator.show {
             transform: translateY(0);
+        }
+
+        /* QR Join Success Message */
+        .join-success {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f8c098;
+            color: #2d3748;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(248, 192, 152, 0.3);
+            z-index: 1000;
+            font-weight: 600;
+            animation: slideDown 0.5s ease-out;
+            border: 2px solid #f2bc91;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .join-success.hide {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+            }
+        }
+
+        /* QR Share Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            max-width: 400px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e2e8f0;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: #3b5c6c;
+            color: white;
+            padding: 18px 20px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.6em;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 25px 20px;
+        }
+
+        .share-info {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .share-info h4 {
+            font-size: 1.1em;
+            color: #3b5c6c;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .share-info p {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .qr-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .qr-code-display {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            min-width: 180px;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-qr {
+            color: #64748b;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .qr-info {
+            text-align: center;
+        }
+
+        .share-token {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #f8c098;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .share-hint {
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #f8c098;
+            color: #2d3748;
+            border-color: #f2bc91;
+        }
+
+        .btn-primary:hover {
+            background: #f2bc91;
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
         }
 
         /* Numpad bleibt gleich aber heller */
@@ -482,12 +732,12 @@
             }
 
             .action-buttons {
-                flex-direction: row;
-                gap: 10px;
+                flex-direction: column;
+                gap: 8px;
             }
 
             .action-btn {
-                width: 48%;
+                width: 100%;
                 font-size: 0.9em;
                 padding: 10px 15px;
             }
@@ -589,6 +839,9 @@
                 <a href="/" class="action-btn btn-primary">
                     🏠 Neues Spiel
                 </a>
+                <button class="action-btn btn-secondary" onclick="showShareQr()">
+                    📱 QR-Code teilen
+                </button>
                 <a href="/results/{{ game.id }}" class="action-btn btn-success">
                     🏆 Spiel beenden
                 </a>
@@ -620,10 +873,51 @@
         </div>
     </div>
 
+    <!-- QR Share Modal -->
+    <div class="modal-overlay" id="shareQrModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">📱 Spiel teilen</h3>
+                <button class="modal-close" onclick="closeShareQrModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="share-info">
+                    <h4>Andere können diesem Spiel beitreten:</h4>
+                    <p>{{ game.place }} • {{ game.date }} • {{ track_count }} Bahnen</p>
+                </div>
+
+                <div class="qr-section">
+                    <div class="qr-container">
+                        <div id="shareQrCode" class="qr-code-display">
+                            <div class="loading-qr">📱 QR-Code wird geladen...</div>
+                        </div>
+                        <div class="qr-info">
+                            <div class="share-token" id="currentShareToken">---</div>
+                            <div class="share-hint">Scannen und direkt mitspielen!</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="copyCurrentShareLink()">
+                        📋 Link kopieren
+                    </button>
+                    <button class="btn btn-primary" onclick="closeShareQrModal()">
+                        ✅ Fertig
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Save Indicator -->
     <div class="save-indicator" id="saveIndicator">
         ✅ Gespeichert!
     </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 
     <script>
         let currentInput = null;
@@ -933,6 +1227,161 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             calculateInitialTotals();
+            
+            // Check if user joined via QR code
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('joined') === 'true') {
+                showJoinSuccessMessage();
+                
+                // Clean URL without reload
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        });
+
+        function showJoinSuccessMessage() {
+            const message = document.createElement('div');
+            message.className = 'join-success';
+            message.innerHTML = '🎉 Erfolgreich dem Spiel beigetreten! Du kannst jetzt Scores eingeben.';
+            
+            document.body.appendChild(message);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                message.classList.add('hide');
+                setTimeout(() => {
+                    message.remove();
+                }, 300);
+            }, 5000);
+            
+            console.log('🎯 QR Join success message shown');
+        }
+
+        // QR Share Functions
+        let currentShareData = null;
+
+        async function showShareQr() {
+            console.log('📱 Loading share QR for game {{ game.id }}');
+            
+            try {
+                // Show modal immediately
+                document.getElementById('shareQrModal').classList.add('show');
+                document.body.style.overflow = 'hidden';
+                
+                // Load share data from API
+                const response = await fetch('/api/games/{{ game.id }}/share');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentShareData = data;
+                    
+                    // Update modal content
+                    document.getElementById('currentShareToken').textContent = data.share_token;
+                    
+                    // Generate QR code
+                    generateShareQrCode(data.share_url);
+                    
+                    console.log('✅ Share QR loaded:', data.share_token);
+                } else {
+                    throw new Error(data.message || 'Failed to load share data');
+                }
+                
+            } catch (error) {
+                console.error('❌ Share QR error:', error);
+                
+                // Show error in QR container
+                const qrContainer = document.getElementById('shareQrCode');
+                qrContainer.innerHTML = '<div class="loading-qr" style="color: #dc2626;">❌ Fehler beim Laden</div>';
+                
+                // Still show modal with error
+                document.getElementById('shareQrModal').classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function generateShareQrCode(url) {
+            console.log('📱 Generating share QR code for:', url);
+            
+            const qrContainer = document.getElementById('shareQrCode');
+            qrContainer.innerHTML = ''; // Clear loading message
+            
+            try {
+                QRCode.toCanvas(qrContainer, url, {
+                    width: 160,
+                    height: 160,
+                    margin: 2,
+                    color: {
+                        dark: '#3b5c6c',
+                        light: '#ffffff'
+                    }
+                }, function(error) {
+                    if (error) {
+                        console.error('❌ Share QR Code generation error:', error);
+                        qrContainer.innerHTML = '<div class="loading-qr" style="color: #dc2626;">QR-Code Fehler</div>';
+                    } else {
+                        console.log('✅ Share QR Code generated');
+                    }
+                });
+            } catch (error) {
+                console.error('❌ QR Code library error:', error);
+                qrContainer.innerHTML = '<div class="loading-qr">📱 QR wird geladen...</div>';
+            }
+        }
+
+        function closeShareQrModal() {
+            document.getElementById('shareQrModal').classList.remove('show');
+            document.body.style.overflow = '';
+            currentShareData = null;
+        }
+
+        async function copyCurrentShareLink() {
+            if (!currentShareData || !currentShareData.share_url) {
+                alert('❌ Kein Share-Link verfügbar');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(currentShareData.share_url);
+                
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Kopiert!';
+                button.style.background = '#10b981';
+                button.style.color = 'white';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                    button.style.color = '';
+                }, 2000);
+                
+                console.log('📋 Share link copied:', currentShareData.share_url);
+                
+            } catch (error) {
+                console.error('❌ Copy failed:', error);
+                prompt('Link kopieren (Strg+C):', currentShareData.share_url);
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('shareQrModal');
+            if (e.target === modal) {
+                closeShareQrModal();
+            }
+        });
+
+        // Close modal with ESC key  
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeShareQrModal();
+            }
         });
     </script>
 </body>
